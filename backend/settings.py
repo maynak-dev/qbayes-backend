@@ -89,10 +89,10 @@ DATABASES = {
     }
 }
 
-# DATABASES["default"] = dj_database_url.parse("postgresql://admindb_j2a1_user:NmxtFfTo1LaD6mD84KgODCu8kolGNWaq@dpg-d6a56lp5pdvs738ruqog-a.oregon-postgres.render.com/admindb_j2a1")
+DATABASES["default"] = dj_database_url.parse("postgresql://admindb_j2a1_user:NmxtFfTo1LaD6mD84KgODCu8kolGNWaq@dpg-d6a56lp5pdvs738ruqog-a.oregon-postgres.render.com/admindb_j2a1")
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
 # Password validation
