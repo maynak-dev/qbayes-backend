@@ -147,5 +147,5 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
-    'https://qbayes-frontend.vercel.app/',
+    'https://qbayes-frontend.vercel.app',
 ]
