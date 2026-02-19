@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,6 +87,9 @@ DATABASES = {
     }
 }
 
+DATABASES["default"] = dj_database_url.parse("postgresql://admindb_j2a1_user:NmxtFfTo1LaD6mD84KgODCu8kolGNWaq@dpg-d6a56lp5pdvs738ruqog-a.oregon-postgres.render.com/admindb_j2a1")
+
+# postgresql://admindb_j2a1_user:NmxtFfTo1LaD6mD84KgODCu8kolGNWaq@dpg-d6a56lp5pdvs738ruqog-a.oregon-postgres.render.com/admindb_j2a1
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
