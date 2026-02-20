@@ -124,3 +124,24 @@ class UserActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserActivity
         fields = ['month', 'active_users', 'new_users']
+
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = '__all__'
+
+class CompanySerializer(serializers.ModelSerializer):
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    shops_count = serializers.IntegerField(source='shops.count', read_only=True)
+
+    class Meta:
+        model = Company
+        fields = '__all__'
+
+class ShopSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    location_name = serializers.CharField(source='location.name', read_only=True)
+
+    class Meta:
+        model = Shop
+        fields = '__all__'

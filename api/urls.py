@@ -19,4 +19,10 @@ urlpatterns = [
     # Users - combined list and create
     path('users/', UserListCreateView.as_view(), name='user-list-create'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
+    path('locations/', LocationListCreate.as_view(), name='location-list'),
+    path('locations/<int:pk>/', LocationRetrieveUpdateDestroy.as_view(), name='location-detail'),
+    path('companies/', CompanyListCreate.as_view(), name='company-list'),
+    path('companies/<int:pk>/', CompanyRetrieveUpdateDestroy.as_view(), name='company-detail'),
+    path('shops/', ShopListCreate.as_view(), name='shop-list'),
+    path('shops/<int:pk>/', ShopRetrieveUpdateDestroy.as_view(), name='shop-detail'),
 ]
