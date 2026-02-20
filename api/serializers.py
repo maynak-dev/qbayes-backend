@@ -3,75 +3,58 @@ from django.contrib.auth.models import User
 from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
-    # Custom field for full name (from User model)
+    # Profile fields
+    role = serializers.CharField(source='profile.role', required=False, allow_blank=True)
+    designation = serializers.CharField(source='profile.designation', required=False, allow_blank=True)
+    company = serializers.CharField(source='profile.company', required=False, allow_blank=True)
+    location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
+    shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
+    phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
+    status = serializers.CharField(source='profile.status', required=False, default='Pending')
+    steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
+
+    # Read-only fields
     name = serializers.SerializerMethodField()
-
-    # Profile fields (now directly represented, no source)
-    role = serializers.CharField(source='profile.role', default='')
-    designation = serializers.CharField(source='profile.designation', default='')
-    company = serializers.CharField(source='profile.company', default='')
-    phone = serializers.CharField(required=False, allow_blank=True, default='')
-    status = serializers.CharField(required=False, allow_blank=True, default='Pending')
-    steps = serializers.IntegerField(required=False, default=0)
-
-    # Read-only created_at from User's date_joined
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'name',
-            'role', 'designation', 'company', 'phone',
-            'status', 'steps', 'created_at'
+            'role', 'designation', 'company', 'location', 'shop',
+            'phone', 'status', 'steps', 'created_at'
         ]
 
     def get_name(self, obj):
-        """Return full name or username if full name not set."""
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        # Extract profile fields
-        profile_fields = ['role', 'designation', 'company', 'phone', 'status', 'steps']
-        profile_data = {field: validated_data.pop(field, '') for field in profile_fields}
-
-        # Remove empty strings to avoid overwriting with blank (optional)
-        profile_data = {k: v for k, v in profile_data.items() if v != ''}
-
-        # Create User (password handling – you may need to adjust if password is sent)
-        # For now, we assume password is not sent; if needed, handle separately.
+        # Extract profile data
+        profile_data = validated_data.pop('profile', {})
+        # Create user (password handling – you may need to add a password field)
         user = User.objects.create_user(
             username=validated_data.get('username'),
-            email=validated_data.get('email', ''),
-            # first_name/last_name can be set from 'name' if you want to split
+            email=validated_data.get('email', '')
         )
-
-        # Create Profile
+        # Create profile
         Profile.objects.create(user=user, **profile_data)
         return user
 
     def update(self, instance, validated_data):
-        # Extract profile fields
-        profile_fields = ['role', 'designation', 'company', 'phone', 'status', 'steps']
-        profile_data = {}
-        for field in profile_fields:
-            if field in validated_data:
-                profile_data[field] = validated_data.pop(field)
-
-        # Update User fields
+        # Extract profile data
+        profile_data = validated_data.pop('profile', {})
+        # Update user fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
-        # Optionally update first_name/last_name if you send them
-        # For now, we ignore 'name' as it's derived
-
         instance.save()
 
-        # Update or create Profile
+        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
-        for field, value in profile_data.items():
-            setattr(profile, field, value)
+        for attr, value in profile_data.items():
+            setattr(profile, attr, value)
         profile.save()
-
         return instance
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -86,48 +69,52 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password']
         )
+        # Create an empty profile for the new user
+        Profile.objects.create(user=user)
         return user
 
+
+# Other serializers (unchanged, keep your existing ones)
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource
-        fields = ['name', 'visitors']
+        fields = '__all__'
 
 class NewUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = NewUser
-        fields = ['name', 'role', 'time_added', 'emoji']
+        fields = '__all__'
 
 class SalesDistributionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesDistribution
-        fields = ['city', 'sales']
+        fields = '__all__'
+
+class ProjectTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectTask
+        fields = '__all__'
 
 class ProjectSerializer(serializers.ModelSerializer):
-    tasks = serializers.StringRelatedField(many=True, read_only=True)
+    tasks = ProjectTaskSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
-        fields = ['name', 'progress', 'due_days', 'tasks']
+        fields = '__all__'
 
 class ActiveAuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActiveAuthor
-        fields = ['name', 'role', 'progress', 'trend']
+        fields = '__all__'
 
 class DesignationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Designation
-        fields = ['title', 'company', 'date', 'color']
+        fields = '__all__'
 
 class UserActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserActivity
-        fields = ['month', 'active_users', 'new_users']
-
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Role
         fields = '__all__'
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -136,21 +123,30 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CompanySerializer(serializers.ModelSerializer):
-    location_name = serializers.CharField(source='location.name', read_only=True)
+    location_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Company
-        fields = '__all__'
+        fields = ['id', 'name', 'location', 'location_name', 'created_at']
+
+    def get_location_name(self, obj):
+        return obj.location.name if obj.location else None
 
 class ShopSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    location_name = serializers.CharField(source='location.name', read_only=True)
+    company_name = serializers.SerializerMethodField()
+    location_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
-        fields = '__all__'
+        fields = ['id', 'name', 'company', 'company_name', 'location', 'location_name', 'created_at']
 
-class DesignationSerializer(serializers.ModelSerializer):
+    def get_company_name(self, obj):
+        return obj.company.name if obj.company else None
+
+    def get_location_name(self, obj):
+        return obj.location.name if obj.location else None
+
+class RoleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Designation
+        model = Role
         fields = '__all__'
