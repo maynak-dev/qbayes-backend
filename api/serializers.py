@@ -7,9 +7,9 @@ class UserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
     # Profile fields (now directly represented, no source)
-    role = serializers.CharField(required=False, allow_blank=True, default='')
-    designation = serializers.CharField(required=False, allow_blank=True, default='')
-    company = serializers.CharField(required=False, allow_blank=True, default='')
+    role = serializers.CharField(source='profile.role', default='')
+    designation = serializers.CharField(source='profile.designation', default='')
+    company = serializers.CharField(source='profile.company', default='')
     phone = serializers.CharField(required=False, allow_blank=True, default='')
     status = serializers.CharField(required=False, allow_blank=True, default='Pending')
     steps = serializers.IntegerField(required=False, default=0)
