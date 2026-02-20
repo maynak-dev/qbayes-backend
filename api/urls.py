@@ -25,4 +25,6 @@ urlpatterns = [
     path('companies/<int:pk>/', CompanyRetrieveUpdateDestroy.as_view(), name='company-detail'),
     path('shops/', ShopListCreate.as_view(), name='shop-list'),
     path('shops/<int:pk>/', ShopRetrieveUpdateDestroy.as_view(), name='shop-detail'),
+    path('roles/', RoleListCreate.as_view(), name='role-list'),
+    path('roles/<int:pk>/', RoleRetrieveUpdateDestroy.as_view(), name='role-detail'),
 ]

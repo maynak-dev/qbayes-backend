@@ -148,3 +148,13 @@ class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class RoleListCreate(generics.ListCreateAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAuthenticated]

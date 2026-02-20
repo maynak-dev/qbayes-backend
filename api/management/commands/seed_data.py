@@ -5,7 +5,8 @@ from django.utils import timezone
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, Designation, UserActivity, Location, Company, Shop
+    ActiveAuthor, Designation, UserActivity, Location, Company, Shop,
+    Role  # 👈 added Role
 )
 
 class Command(BaseCommand):
@@ -127,5 +128,19 @@ class Command(BaseCommand):
             )
             shops.append(shop)
         self.stdout.write(f'✅ Created {len(shops)} shops')
+
+        # 11. Roles (for Designations page)
+        Role.objects.all().delete()
+        role_names = [
+            'HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead',
+            'Product Owner', 'Senior Director', 'Compliance', 'Marketing',
+            'Accountant', 'Support Engineer'
+        ]
+        for name in role_names:
+            Role.objects.create(
+                name=name,
+                description=fake.sentence()
+            )
+        self.stdout.write(f'✅ Created {len(role_names)} roles')
 
         self.stdout.write(self.style.SUCCESS('🎉 Database seeded successfully!'))
