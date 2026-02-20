@@ -128,20 +128,19 @@ class UserActivitySerializer(serializers.ModelSerializer):
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ['id', 'name', 'description', 'created_at']
+        fields = '__all__'
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ['id', 'name', 'created_at']
+        fields = '__all__'
 
 class CompanySerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name', read_only=True)
-    shops_count = serializers.IntegerField(source='shops.count', read_only=True)
 
     class Meta:
         model = Company
-        fields = ['id', 'name', 'location', 'location_name', 'shops_count', 'created_at']
+        fields = '__all__'
 
 class ShopSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -149,9 +148,9 @@ class ShopSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'company', 'company_name', 'location', 'location_name', 'created_at']
+        fields = '__all__'
 
 class DesignationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Designation
-        fields = ['id', 'title', 'company', 'date', 'color', 'created_at']
+        fields = '__all__'

@@ -1,10 +1,47 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.db import models
+from django.contrib.auth.models import User
+
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    avatar = models.CharField(max_length=255, blank=True)  # URL or emoji
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=100, blank=True)
+    designation = models.CharField(max_length=100, blank=True)
+    company = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    status = models.CharField(max_length=20, default='Pending')
+    steps = models.IntegerField(default=0)
+    location = models.CharField(max_length=100, blank=True)
+    shop = models.CharField(max_length=100, blank=True)   # if you added shop field
+
+class Location(models.Model):
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Company(models.Model):
+    name = models.CharField(max_length=200)
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='companies')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Shop(models.Model):
+    name = models.CharField(max_length=200)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='shops')
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Role(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Designation(models.Model):
+    title = models.CharField(max_length=100)
+    company = models.CharField(max_length=100)
+    date = models.DateField()
+    color = models.CharField(max_length=7)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 class TrafficSource(models.Model):
     name = models.CharField(max_length=50)
@@ -48,54 +85,3 @@ class UserActivity(models.Model):
     month = models.CharField(max_length=3)  # Jan, Feb, etc.
     active_users = models.IntegerField()
     new_users = models.IntegerField()
-
-
-class Profile(models.Model):
-    # Link to Django's built-in User model
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-
-    # Profile fields (match your serializer)
-    role = models.CharField(max_length=100, blank=True, default='')
-    designation = models.CharField(max_length=100, blank=True, default='')
-    company = models.CharField(max_length=100, blank=True, default='')
-    phone = models.CharField(max_length=20, blank=True, default='')
-    status = models.CharField(max_length=20, default='Pending')   # e.g., Pending, Approved, Rejected
-    steps = models.IntegerField(default=0)
-
-    # Optional – add if you need location
-    location = models.CharField(max_length=100, blank=True, default='')
-
-    def __str__(self):
-        return f"{self.user.username}'s profile"
-
-class Location(models.Model):
-    name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-class Company(models.Model):
-    name = models.CharField(max_length=200)
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='companies')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-class Shop(models.Model):
-    name = models.CharField(max_length=200)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='shops')
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.company.name})"
-
-class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name

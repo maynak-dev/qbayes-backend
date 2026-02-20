@@ -3,8 +3,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import *
-from .models import *
+
+from .models import (
+    User, TrafficSource, NewUser, SalesDistribution, Project,
+    ActiveAuthor, Designation, UserActivity, Location, Company, Shop, Role
+)
+from .serializers import (
+    UserSerializer, RegisterSerializer, TrafficSourceSerializer,
+    NewUserSerializer, SalesDistributionSerializer, ProjectSerializer,
+    ActiveAuthorSerializer, DesignationSerializer, UserActivitySerializer,
+    LocationSerializer, CompanySerializer, ShopSerializer, RoleSerializer
+)
 
 # Authentication
 class RegisterView(generics.CreateAPIView):
@@ -34,12 +43,8 @@ class TotalUsersView(APIView):
 
     def get(self, request):
         total = User.objects.count()
-        # Dummy weekly growth (you can compute from historical data)
-        growth = 12.5
-        return Response({
-            'total': total,
-            'growth': growth
-        })
+        growth = 12.5  # dummy value
+        return Response({'total': total, 'growth': growth})
 
 class TrafficSourcesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -53,7 +58,6 @@ class NewUsersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Get latest 4 new users
         users = NewUser.objects.order_by('-time_added')[:4]
         serializer = NewUserSerializer(users, many=True)
         return Response(serializer.data)
@@ -70,7 +74,6 @@ class ProjectProgressView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Assume we have one main project
         project = Project.objects.first()
         if not project:
             return Response({})
@@ -101,11 +104,7 @@ class UserActivityView(APIView):
         serializer = UserActivitySerializer(activities, many=True)
         return Response(serializer.data)
 
-class UserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
+# User CRUD
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -116,7 +115,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Role views
+# Role
 class RoleListCreate(generics.ListCreateAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
@@ -127,7 +126,7 @@ class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Location views
+# Location
 class LocationListCreate(generics.ListCreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -138,7 +137,7 @@ class LocationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LocationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Company views
+# Company
 class CompanyListCreate(generics.ListCreateAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
@@ -149,7 +148,7 @@ class CompanyRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CompanySerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Shop views
+# Shop
 class ShopListCreate(generics.ListCreateAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
@@ -160,7 +159,7 @@ class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Designation views
+# Designation
 class DesignationListCreate(generics.ListCreateAPIView):
     queryset = Designation.objects.all()
     serializer_class = DesignationSerializer
