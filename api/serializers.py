@@ -125,10 +125,15 @@ class UserActivitySerializer(serializers.ModelSerializer):
         model = UserActivity
         fields = ['month', 'active_users', 'new_users']
 
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ['id', 'name', 'description', 'created_at']
+
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = '__all__'
+        fields = ['id', 'name', 'created_at']
 
 class CompanySerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name', read_only=True)
@@ -136,7 +141,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        fields = '__all__'
+        fields = ['id', 'name', 'location', 'location_name', 'shops_count', 'created_at']
 
 class ShopSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -144,9 +149,9 @@ class ShopSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = '__all__'
+        fields = ['id', 'name', 'company', 'company_name', 'location', 'location_name', 'created_at']
 
-class RoleSerializer(serializers.ModelSerializer):
+class DesignationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Role
-        fields = ['id', 'name', 'description', 'created_at']
+        model = Designation
+        fields = ['id', 'title', 'company', 'date', 'color', 'created_at']

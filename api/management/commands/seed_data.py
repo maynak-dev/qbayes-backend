@@ -6,7 +6,7 @@ from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
     ActiveAuthor, Designation, UserActivity, Location, Company, Shop,
-    Role  # 👈 added Role
+    Role
 )
 
 class Command(BaseCommand):
@@ -28,7 +28,7 @@ class Command(BaseCommand):
             TrafficSource.objects.create(name=src['name'], visitors=src['visitors'])
         self.stdout.write('✅ Traffic sources created')
 
-        # 2. New Users
+        # 2. New Users (for dashboard widget)
         NewUser.objects.all().delete()
         roles = ['HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead', 'Product Owner']
         emojis = ['👩', '👨', '🧔', '👩‍🦰', '👨‍🦱', '🧑‍💻']
@@ -73,7 +73,7 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ Active authors created')
 
-        # 6. New Designations
+        # 6. New Designations (for dashboard widget)
         Designation.objects.all().delete()
         titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
         companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
@@ -98,7 +98,7 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ User activity created')
 
-        # 8. Locations
+        # 8. Locations (for company creation)
         Location.objects.all().delete()
         locations = []
         for _ in range(5):

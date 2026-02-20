@@ -116,6 +116,17 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+# Role views
+class RoleListCreate(generics.ListCreateAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 # Location views
 class LocationListCreate(generics.ListCreateAPIView):
     queryset = Location.objects.all()
@@ -149,12 +160,13 @@ class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class RoleListCreate(generics.ListCreateAPIView):
-    queryset = Role.objects.all()
-    serializer_class = RoleSerializer
+# Designation views
+class DesignationListCreate(generics.ListCreateAPIView):
+    queryset = Designation.objects.all()
+    serializer_class = DesignationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Role.objects.all()
-    serializer_class = RoleSerializer
+class DesignationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Designation.objects.all()
+    serializer_class = DesignationSerializer
     permission_classes = [permissions.IsAuthenticated]
