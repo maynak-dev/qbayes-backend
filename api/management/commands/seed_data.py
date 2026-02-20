@@ -5,7 +5,7 @@ from django.utils import timezone
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, Designation, UserActivity
+    ActiveAuthor, Designation, UserActivity, Location, Company, Shop
 )
 
 class Command(BaseCommand):
@@ -75,12 +75,12 @@ class Command(BaseCommand):
         # 6. New Designations
         Designation.objects.all().delete()
         titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
-        companies = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
+        companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
         colors = ['#3e97ff', '#ffc700', '#f1416c', '#50cd89']
         for i in range(4):
             Designation.objects.create(
                 title=titles[i],
-                company=companies[i],
+                company=companies_list[i],
                 date=fake.date_between(start_date='-30d', end_date='today'),
                 color=colors[i]
             )
@@ -96,5 +96,36 @@ class Command(BaseCommand):
                 new_users=random.randint(15, 45)
             )
         self.stdout.write('✅ User activity created')
+
+        # 8. Locations
+        Location.objects.all().delete()
+        locations = []
+        for _ in range(5):
+            loc = Location.objects.create(name=fake.city())
+            locations.append(loc)
+        self.stdout.write(f'✅ Created {len(locations)} locations')
+
+        # 9. Companies (linked to random locations)
+        Company.objects.all().delete()
+        companies = []
+        for _ in range(8):
+            comp = Company.objects.create(
+                name=fake.company(),
+                location=random.choice(locations) if locations else None
+            )
+            companies.append(comp)
+        self.stdout.write(f'✅ Created {len(companies)} companies')
+
+        # 10. Shops (linked to random companies and locations)
+        Shop.objects.all().delete()
+        shops = []
+        for _ in range(15):
+            shop = Shop.objects.create(
+                name=fake.word().capitalize() + " Shop",
+                company=random.choice(companies) if companies else None,
+                location=random.choice(locations) if locations else None
+            )
+            shops.append(shop)
+        self.stdout.write(f'✅ Created {len(shops)} shops')
 
         self.stdout.write(self.style.SUCCESS('🎉 Database seeded successfully!'))
