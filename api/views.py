@@ -132,6 +132,13 @@ class LocationListCreate(generics.ListCreateAPIView):
     serializer_class = LocationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        company_id = self.request.query_params.get('company')
+        if company_id:
+            queryset = queryset.filter(company_id=company_id)
+        return queryset
+
 class LocationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -153,6 +160,13 @@ class ShopListCreate(generics.ListCreateAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        location_id = self.request.query_params.get('location')
+        if location_id:
+            queryset = queryset.filter(location_id=location_id)
+        return queryset
 
 class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Shop.objects.all()

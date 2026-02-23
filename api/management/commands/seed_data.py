@@ -98,33 +98,34 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ User activity created')
 
-        # 8. Locations (for company creation)
-        Location.objects.all().delete()
-        locations = []
-        for _ in range(5):
-            loc = Location.objects.create(name=fake.city())
-            locations.append(loc)
-        self.stdout.write(f'✅ Created {len(locations)} locations')
-
-        # 9. Companies (linked to random locations)
+        # 8. Companies (first, independent)
         Company.objects.all().delete()
         companies = []
         for _ in range(8):
-            comp = Company.objects.create(
-                name=fake.company(),
-                location=random.choice(locations) if locations else None
-            )
+            comp = Company.objects.create(name=fake.company())
             companies.append(comp)
         self.stdout.write(f'✅ Created {len(companies)} companies')
 
-        # 10. Shops (linked to random companies and locations)
+        # 9. Locations (linked to companies)
+        Location.objects.all().delete()
+        locations = []
+        for _ in range(12):  # create more locations than companies
+            company = random.choice(companies)
+            loc = Location.objects.create(
+                name=fake.city(),
+                company=company
+            )
+            locations.append(loc)
+        self.stdout.write(f'✅ Created {len(locations)} locations')
+
+        # 10. Shops (linked to locations)
         Shop.objects.all().delete()
         shops = []
-        for _ in range(15):
+        for _ in range(20):
+            location = random.choice(locations)
             shop = Shop.objects.create(
                 name=fake.word().capitalize() + " Shop",
-                company=random.choice(companies) if companies else None,
-                location=random.choice(locations) if locations else None
+                location=location
             )
             shops.append(shop)
         self.stdout.write(f'✅ Created {len(shops)} shops')

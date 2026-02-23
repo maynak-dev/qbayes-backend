@@ -117,28 +117,28 @@ class UserActivitySerializer(serializers.ModelSerializer):
         model = UserActivity
         fields = '__all__'
 
-class LocationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Location
-        fields = '__all__'
-
 class CompanySerializer(serializers.ModelSerializer):
-    location_name = serializers.SerializerMethodField()
+    locations_count = serializers.IntegerField(source='locations.count', read_only=True)
 
     class Meta:
         model = Company
-        fields = ['id', 'name', 'location', 'location_name', 'created_at']
+        fields = ['id', 'name', 'locations_count', 'created_at']
 
-    def get_location_name(self, obj):
-        return obj.location.name if obj.location else None
+class LocationSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    shops_count = serializers.IntegerField(source='shops.count', read_only=True)
+
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'company', 'company_name', 'shops_count', 'created_at']
 
 class ShopSerializer(serializers.ModelSerializer):
-    company_name = serializers.SerializerMethodField()
-    location_name = serializers.SerializerMethodField()
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    company_name = serializers.CharField(source='location.company.name', read_only=True)
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'company', 'company_name', 'location', 'location_name', 'created_at']
+        fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
 
     def get_company_name(self, obj):
         return obj.company.name if obj.company else None
