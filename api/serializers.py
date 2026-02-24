@@ -6,9 +6,20 @@ from .models import (
     ProjectTask, ActiveAuthor, UserActivity
 )
 
+class RoleSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    shop_name = serializers.CharField(source='shop.name', read_only=True)
+    users_count = serializers.IntegerField(source='profiles.count', read_only=True)
+
+    class Meta:
+        model = Role
+        fields = '__all__'
+
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
+    role_details = RoleSerializer(source='role', read_only=True)   # nested role details
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
     status = serializers.CharField(source='profile.status', required=False, default='Pending')
     steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
@@ -24,7 +35,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'name',
-            'role', 'phone', 'status', 'steps',
+            'role', 'role_details',   # added role_details
+            'phone', 'status', 'steps',
             'company', 'location', 'shop', 'created_at'
         ]
 
@@ -71,16 +83,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         Profile.objects.create(user=user)
         return user
-
-class RoleSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    location_name = serializers.CharField(source='location.name', read_only=True)
-    shop_name = serializers.CharField(source='shop.name', read_only=True)
-    users_count = serializers.IntegerField(source='profiles.count', read_only=True)
-
-    class Meta:
-        model = Role
-        fields = '__all__'
 
 class CompanySerializer(serializers.ModelSerializer):
     locations_count = serializers.IntegerField(source='locations.count', read_only=True)
