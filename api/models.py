@@ -6,14 +6,16 @@ from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=100, blank=True)
-    designation = models.CharField(max_length=100, blank=True)
-    company = models.CharField(max_length=100, blank=True)   # will store company name (or ID)
+    role = models.CharField(max_length=100, blank=True)          # single role field
     phone = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, default='Pending')
     steps = models.IntegerField(default=0)
+    company = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=100, blank=True)
     shop = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s profile"
 
 class Location(models.Model):
     name = models.CharField(max_length=100)
@@ -48,7 +50,6 @@ class Designation(models.Model):
     company = models.CharField(max_length=100)
     date = models.DateField()
     color = models.CharField(max_length=7)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class TrafficSource(models.Model):

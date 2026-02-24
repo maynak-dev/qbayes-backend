@@ -5,13 +5,12 @@ from .models import *
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
     role = serializers.CharField(source='profile.role', required=False, allow_blank=True)
-    designation = serializers.CharField(source='profile.designation', required=False, allow_blank=True)
-    company = serializers.CharField(source='profile.company', required=False, allow_blank=True)
-    location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
-    shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
     status = serializers.CharField(source='profile.status', required=False, default='Pending')
     steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
+    company = serializers.CharField(source='profile.company', required=False, allow_blank=True)
+    location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
+    shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
 
     # Read-only fields
     name = serializers.SerializerMethodField()
@@ -21,34 +20,28 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'name',
-            'role', 'designation', 'company', 'location', 'shop',
-            'phone', 'status', 'steps', 'created_at'
+            'role', 'phone', 'status', 'steps',
+            'company', 'location', 'shop', 'created_at'
         ]
 
     def get_name(self, obj):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        # Extract profile data
         profile_data = validated_data.pop('profile', {})
-        # Create user (password handling – you may need to add a password field)
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
-        # Create profile
         Profile.objects.create(user=user, **profile_data)
         return user
 
     def update(self, instance, validated_data):
-        # Extract profile data
         profile_data = validated_data.pop('profile', {})
-        # Update user fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
-        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
@@ -69,12 +62,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password']
         )
-        # Create an empty profile for the new user
         Profile.objects.create(user=user)
         return user
 
 
-# Other serializers (unchanged, keep your existing ones)
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource

@@ -1,12 +1,9 @@
 import random
-from datetime import timedelta
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, Designation, UserActivity, Location, Company, Shop,
-    Role
+    ActiveAuthor, Designation, UserActivity, Location, Company, Shop
 )
 
 class Command(BaseCommand):
@@ -98,7 +95,7 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ User activity created')
 
-        # 8. Companies (first, independent)
+        # 8. Companies
         Company.objects.all().delete()
         companies = []
         for _ in range(8):
@@ -109,7 +106,7 @@ class Command(BaseCommand):
         # 9. Locations (linked to companies)
         Location.objects.all().delete()
         locations = []
-        for _ in range(12):  # create more locations than companies
+        for _ in range(12):
             company = random.choice(companies)
             loc = Location.objects.create(
                 name=fake.city(),
@@ -130,18 +127,19 @@ class Command(BaseCommand):
             shops.append(shop)
         self.stdout.write(f'✅ Created {len(shops)} shops')
 
-        # 11. Roles (for Designations page)
-        Role.objects.all().delete()
-        role_names = [
+        # 11. Additional Designations (for role dropdown)
+        extra_titles = [
             'HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead',
             'Product Owner', 'Senior Director', 'Compliance', 'Marketing',
-            'Accountant', 'Support Engineer'
+            'Accountant', 'Support Engineer', 'Team Lead', 'Architect', 'Analyst'
         ]
-        for name in role_names:
-            Role.objects.create(
-                name=name,
-                description=fake.sentence()
+        for title in extra_titles:
+            Designation.objects.create(
+                title=title,
+                company=random.choice(companies_list + [fake.company()]),
+                date=fake.date_between(start_date='-60d', end_date='today'),
+                color=random.choice(['#3e97ff', '#ffc700', '#f1416c', '#50cd89', '#7e8299'])
             )
-        self.stdout.write(f'✅ Created {len(role_names)} roles')
+        self.stdout.write(f'✅ Added extra designations for role dropdown')
 
         self.stdout.write(self.style.SUCCESS('🎉 Database seeded successfully!'))
