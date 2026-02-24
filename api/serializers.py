@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import *
+from drf_writable_nested import WritableNestedModelSerializer
+from .models import (
+    Profile, Role, Company, Location, Shop,
+    TrafficSource, NewUser, SalesDistribution, Project,
+    ProjectTask, ActiveAuthor, UserActivity, Designation
+)
 
 class RoleSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -18,19 +23,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'role', 'role_details', 'phone', 'status', 'steps', 'company', 'location', 'shop']
-        read_only_fields = ['user']  # user is read-only because it's set via the user instance
+        fields = ['id', 'role', 'role_details', 'phone', 'status', 'steps', 'company', 'location', 'shop']
 
-class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)  # only for GET, not for write
-    role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), write_only=True, required=False, allow_null=True)
-    phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    status = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    steps = serializers.IntegerField(write_only=True, required=False, default=0)
-    company = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    location = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    shop = serializers.CharField(write_only=True, required=False, allow_blank=True)
-
+class UserSerializer(WritableNestedModelSerializer):
+    profile = ProfileSerializer(required=False)  # nested profile
+    role_details = RoleSerializer(source='profile.role', read_only=True)  # for convenience
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
@@ -38,39 +35,21 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'name', 'created_at',
-            'profile',  # nested read‑only profile
-            'role', 'phone', 'status', 'steps', 'company', 'location', 'shop'  # write‑only fields for updates
+            'profile', 'role_details'
         ]
 
     def get_name(self, obj):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        # Extract profile fields
-        profile_fields = {}
-        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
-            if field in validated_data:
-                profile_fields[field] = validated_data.pop(field)
-        role = validated_data.pop('role', None)
-
-        user = User.objects.create_user(
-            username=validated_data.get('username'),
-            email=validated_data.get('email', '')
-        )
-        Profile.objects.create(user=user, role=role, **profile_fields)
-        return user
+        # The mixin will handle the nested profile creation automatically
+        # We just need to create the user without a password (password handling omitted)
+        # If you need to set a password, you can do it here.
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        # Update user fields
-        if 'username' in validated_data:
-            instance.username = validated_data['username']
-        if 'email' in validated_data:
-            instance.email = validated_data['email']
-        instance.save()
-
-        # The profile fields are handled separately via the profile update endpoint
-        return instance
-
+        # The mixin handles nested profile updates
+        return super().update(instance, validated_data)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
