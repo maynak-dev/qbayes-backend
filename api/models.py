@@ -27,19 +27,23 @@ class Shop(models.Model):
 class Role(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
-    
+    # Make these nullable initially to allow migration
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
+
     # Role Management permissions
     role_create = models.BooleanField(default=False)
     role_edit = models.BooleanField(default=False)
     role_delete = models.BooleanField(default=False)
     role_view = models.BooleanField(default=False)
-    
+
     # User Management permissions
     user_create = models.BooleanField(default=False)
     user_edit = models.BooleanField(default=False)
     user_delete = models.BooleanField(default=False)
     user_view = models.BooleanField(default=False)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -56,10 +60,12 @@ class Designation(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=100, blank=True)          # single role field
+    # Change role to ForeignKey, nullable initially
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, related_name='profiles')
     phone = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, default='Pending')
     steps = models.IntegerField(default=0)
+    # These fields are kept for backward compatibility (optional overrides)
     company = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=100, blank=True)
     shop = models.CharField(max_length=100, blank=True)

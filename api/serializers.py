@@ -136,6 +136,10 @@ class ShopSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
 
 class RoleSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    shop_name = serializers.CharField(source='shop.name', read_only=True)
+
     class Meta:
         model = Role
         fields = '__all__'
