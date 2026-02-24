@@ -8,6 +8,7 @@ from .models import (
 
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
+    users_count = serializers.IntegerField(source='profiles.count', read_only=True)
     role = serializers.CharField(source='profile.role', required=False, allow_blank=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
     status = serializers.CharField(source='profile.status', required=False, default='Pending')
