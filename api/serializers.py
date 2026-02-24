@@ -21,6 +21,7 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    # Profile fields – each mapped to the profile's attributes
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     role_details = RoleSerializer(source='role', read_only=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
@@ -47,7 +48,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
-            print("🔵 [CREATE] validated_data:", validated_data)
             # Extract profile fields
             phone = validated_data.pop('phone', '')
             status = validated_data.pop('status', 'Pending')
@@ -57,9 +57,15 @@ class UserSerializer(serializers.ModelSerializer):
             shop = validated_data.pop('shop', '')
             role = validated_data.pop('role', None)
 
+            # Extract user fields
+            username = validated_data.get('username')
+            email = validated_data.get('email', '')
+            # Note: first_name and last_name are not in validated_data because they are not fields.
+            # If you want to support them, you need to add them as fields.
+
             user = User.objects.create_user(
-                username=validated_data.get('username'),
-                email=validated_data.get('email', '')
+                username=username,
+                email=email
             )
             Profile.objects.create(
                 user=user,
@@ -73,14 +79,10 @@ class UserSerializer(serializers.ModelSerializer):
             )
             return user
         except Exception as e:
-            print("🔴 [CREATE] error:", str(e))
-            raise
+            raise serializers.ValidationError({"detail": f"Creation failed: {str(e)}"})
 
     def update(self, instance, validated_data):
         try:
-            print("\n🔵 [UPDATE] instance ID:", instance.id)
-            print("🔵 [UPDATE] validated_data keys:", validated_data.keys())
-
             # Update user fields
             if 'username' in validated_data:
                 instance.username = validated_data['username']
@@ -105,31 +107,15 @@ class UserSerializer(serializers.ModelSerializer):
             if 'shop' in validated_data:
                 profile.shop = validated_data['shop']
 
-            # Update role
+            # Update role (validated_data['role'] is already a Role instance or None)
             if 'role' in validated_data:
-                role_id = validated_data['role']
-                if role_id is not None:
-                    try:
-                        role = Role.objects.get(id=role_id)
-                        profile.role = role
-                        print(f"🔵 [UPDATE] role assigned: {role.name}")
-                    except Role.DoesNotExist:
-                        print(f"🔴 [UPDATE] role with id {role_id} does not exist")
-                        profile.role = None
-                else:
-                    profile.role = None
+                profile.role = validated_data['role']
 
             profile.save()
-            print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
             return instance
-
         except Exception as e:
-            print("🔴 [UPDATE] error:", str(e))
-            import traceback
-            traceback.print_exc()
-            raise
+            raise serializers.ValidationError({"detail": f"Update failed: {str(e)}"})
 
-# ... rest of the serializers (unchanged)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
