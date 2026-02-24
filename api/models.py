@@ -27,10 +27,9 @@ class Shop(models.Model):
 class Role(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
-    # Make these nullable initially to allow migration
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='roles', null=True, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='roles')
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='roles')
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='roles')
 
     # Role Management permissions
     role_create = models.BooleanField(default=False)
@@ -49,23 +48,13 @@ class Role(models.Model):
     def __str__(self):
         return self.name
 
-class Designation(models.Model):
-    title = models.CharField(max_length=100)
-    company = models.CharField(max_length=100)
-    date = models.DateField()
-    color = models.CharField(max_length=7)  # hex color
-
-    def __str__(self):
-        return self.title
-
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    # Change role to ForeignKey, nullable initially
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, related_name='profiles')
     phone = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, default='Pending')
     steps = models.IntegerField(default=0)
-    # These fields are kept for backward compatibility (optional overrides)
+    # Override fields (kept for backward compatibility)
     company = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=100, blank=True)
     shop = models.CharField(max_length=100, blank=True)
@@ -73,7 +62,7 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-# Dashboard models
+# Dashboard models (unchanged)
 class TrafficSource(models.Model):
     name = models.CharField(max_length=50)
     visitors = models.IntegerField()
@@ -98,15 +87,15 @@ class ProjectTask(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     name = models.CharField(max_length=100)
     icon = models.CharField(max_length=10)
-    status = models.CharField(max_length=20)  # Done, In Progress, etc.
+    status = models.CharField(max_length=20)
 
 class ActiveAuthor(models.Model):
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=100)
     progress = models.IntegerField()
-    trend = models.CharField(max_length=10)  # 'up' or 'down'
+    trend = models.CharField(max_length=10)
 
 class UserActivity(models.Model):
-    month = models.CharField(max_length=3)  # Jan, Feb, etc.
+    month = models.CharField(max_length=3)
     active_users = models.IntegerField()
     new_users = models.IntegerField()

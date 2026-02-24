@@ -3,17 +3,16 @@ from django.core.management.base import BaseCommand
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, Designation, UserActivity, Location, Company, Shop,
-    Role  # Role model should now include permission fields
+    ActiveAuthor, UserActivity, Company, Location, Shop, Role
 )
 
 class Command(BaseCommand):
-    help = 'Seed the database with dummy data for dashboard'
+    help = 'Seed database with sample data'
 
     def handle(self, *args, **kwargs):
         fake = Faker()
 
-        # 1. Traffic Sources
+        # 1. TrafficSources
         TrafficSource.objects.all().delete()
         sources = [
             {'name': 'Search', 'visitors': random.randint(800, 1500)},
@@ -24,12 +23,12 @@ class Command(BaseCommand):
         ]
         for src in sources:
             TrafficSource.objects.create(name=src['name'], visitors=src['visitors'])
-        self.stdout.write('✅ Traffic sources created')
+        self.stdout.write('✅ Traffic sources')
 
-        # 2. New Users (for dashboard widget)
+        # 2. NewUsers
         NewUser.objects.all().delete()
-        roles = ['HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead', 'Product Owner']
-        emojis = ['👩', '👨', '🧔', '👩‍🦰', '👨‍🦱', '🧑‍💻']
+        roles = ['HR Manager', 'Developer', 'Designer', 'Sales']
+        emojis = ['👩', '👨', '🧔', '👩‍🦰']
         for _ in range(8):
             NewUser.objects.create(
                 name=fake.name(),
@@ -37,14 +36,14 @@ class Command(BaseCommand):
                 time_added=fake.date_time_between(start_date='-7d', end_date='now'),
                 emoji=random.choice(emojis)
             )
-        self.stdout.write('✅ New users created')
+        self.stdout.write('✅ New users')
 
-        # 3. Sales Distribution
+        # 3. SalesDistribution
         SalesDistribution.objects.all().delete()
         cities = ['NYC', 'LDN', 'PAR', 'TOK', 'BER']
         for city in cities:
             SalesDistribution.objects.create(city=city, sales=random.randint(1500, 10000))
-        self.stdout.write('✅ Sales distribution created')
+        self.stdout.write('✅ Sales distribution')
 
         # 4. Project & Tasks
         Project.objects.all().delete()
@@ -55,37 +54,20 @@ class Command(BaseCommand):
         )
         ProjectTask.objects.create(project=project, name='Design Phase', icon='🎨', status='Done')
         ProjectTask.objects.create(project=project, name='Development', icon='💻', status='In Progress')
-        ProjectTask.objects.create(project=project, name='Testing', icon='🧪', status='Pending')
-        self.stdout.write('✅ Project created')
+        self.stdout.write('✅ Project')
 
-        # 5. Active Authors
+        # 5. ActiveAuthors
         ActiveAuthor.objects.all().delete()
-        names = ['Alice M.', 'Bob D.', 'Charlie', 'Diana P.']
-        roles_auth = ['Editor', 'Author', 'Reviewer', 'Writer']
         for i in range(4):
             ActiveAuthor.objects.create(
-                name=names[i],
-                role=roles_auth[i],
+                name=fake.name(),
+                role=random.choice(['Editor', 'Author', 'Reviewer']),
                 progress=random.randint(70, 99),
                 trend=random.choice(['up', 'down'])
             )
-        self.stdout.write('✅ Active authors created')
+        self.stdout.write('✅ Active authors')
 
-        # 6. New Designations (for dashboard widget)
-        Designation.objects.all().delete()
-        titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
-        companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
-        colors = ['#3e97ff', '#ffc700', '#f1416c', '#50cd89']
-        for i in range(4):
-            Designation.objects.create(
-                title=titles[i],
-                company=companies_list[i],
-                date=fake.date_between(start_date='-30d', end_date='today'),
-                color=colors[i]
-            )
-        self.stdout.write('✅ New designations created')
-
-        # 7. User Activity (monthly)
+        # 6. UserActivity
         UserActivity.objects.all().delete()
         months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
         for month in months:
@@ -94,102 +76,65 @@ class Command(BaseCommand):
                 active_users=random.randint(20, 40),
                 new_users=random.randint(15, 45)
             )
-        self.stdout.write('✅ User activity created')
+        self.stdout.write('✅ User activity')
 
-        # 8. Companies
+        # 7. Companies
         Company.objects.all().delete()
         companies = []
-        for _ in range(8):
+        for _ in range(5):
             comp = Company.objects.create(name=fake.company())
             companies.append(comp)
-        self.stdout.write(f'✅ Created {len(companies)} companies')
+        self.stdout.write('✅ Companies')
 
-        # 9. Locations (linked to companies)
+        # 8. Locations (linked to companies)
         Location.objects.all().delete()
         locations = []
-        for _ in range(12):
-            company = random.choice(companies)
+        for _ in range(8):
             loc = Location.objects.create(
                 name=fake.city(),
-                company=company
+                company=random.choice(companies)
             )
             locations.append(loc)
-        self.stdout.write(f'✅ Created {len(locations)} locations')
+        self.stdout.write('✅ Locations')
 
-        # 10. Shops (linked to locations)
+        # 9. Shops (linked to locations)
         Shop.objects.all().delete()
         shops = []
-        for _ in range(20):
-            location = random.choice(locations)
+        for _ in range(12):
             shop = Shop.objects.create(
-                name=fake.word().capitalize() + " Shop",
-                location=location
+                name=fake.word().capitalize() + ' Shop',
+                location=random.choice(locations)
             )
             shops.append(shop)
-        self.stdout.write(f'✅ Created {len(shops)} shops')
+        self.stdout.write('✅ Shops')
 
-        # 11. Roles (with permissions)
+        # 10. Roles (must have non‑null company, location, shop)
         Role.objects.all().delete()
         role_data = [
-            {
-                'name': 'Admin',
-                'description': 'Full system access',
-                'role_create': True, 'role_edit': True, 'role_delete': True, 'role_view': True,
-                'user_create': True, 'user_edit': True, 'user_delete': True, 'user_view': True,
-            },
-            {
-                'name': 'Manager',
-                'description': 'Can manage users and view roles',
-                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': True,
-                'user_create': True, 'user_edit': True, 'user_delete': False, 'user_view': True,
-            },
-            {
-                'name': 'Employee',
-                'description': 'Basic user with view permissions',
-                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': False,
-                'user_create': False, 'user_edit': False, 'user_delete': False, 'user_view': True,
-            },
-            {
-                'name': 'HR',
-                'description': 'HR personnel',
-                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': True,
-                'user_create': True, 'user_edit': True, 'user_delete': False, 'user_view': True,
-            },
-            {
-                'name': 'Sales',
-                'description': 'Sales team',
-                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': False,
-                'user_create': False, 'user_edit': False, 'user_delete': False, 'user_view': True,
-            }
+            {'name': 'Admin', 'desc': 'Full system access', 'perm': True},
+            {'name': 'Manager', 'desc': 'Can manage users', 'perm': True},
+            {'name': 'Employee', 'desc': 'Basic user', 'perm': False},
         ]
+        all_shops = list(Shop.objects.all())
         for rd in role_data:
+            # pick a random shop – its location and company will be used
+            shop = random.choice(all_shops)
+            company = shop.location.company
+            location = shop.location
             Role.objects.create(
                 name=rd['name'],
-                description=rd['description'],
-                role_create=rd['role_create'],
-                role_edit=rd['role_edit'],
-                role_delete=rd['role_delete'],
-                role_view=rd['role_view'],
-                user_create=rd['user_create'],
-                user_edit=rd['user_edit'],
-                user_delete=rd['user_delete'],
-                user_view=rd['user_view']
+                description=rd['desc'],
+                company=company,
+                location=location,
+                shop=shop,
+                role_create=rd['perm'],
+                role_edit=rd['perm'],
+                role_delete=rd['perm'],
+                role_view=True,
+                user_create=rd['perm'],
+                user_edit=rd['perm'],
+                user_delete=rd['perm'],
+                user_view=True,
             )
-        self.stdout.write(f'✅ Created {len(role_data)} roles with permissions')
-
-        # 12. Additional Designations (for dashboard widget only)
-        extra_titles = [
-            'HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead',
-            'Product Owner', 'Senior Director', 'Compliance', 'Marketing',
-            'Accountant', 'Support Engineer', 'Team Lead', 'Architect', 'Analyst'
-        ]
-        for title in extra_titles:
-            Designation.objects.create(
-                title=title,
-                company=random.choice(companies_list + [fake.company()]),
-                date=fake.date_between(start_date='-60d', end_date='today'),
-                color=random.choice(['#3e97ff', '#ffc700', '#f1416c', '#50cd89', '#7e8299'])
-            )
-        self.stdout.write(f'✅ Added extra designations for dashboard widget')
-
-        self.stdout.write(self.style.SUCCESS('🎉 Database seeded successfully!'))
+        self.stdout.write('✅ Roles')
+        self.stdout.write(self.style.SUCCESS('🎉 All data seeded!'))

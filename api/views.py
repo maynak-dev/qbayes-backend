@@ -2,18 +2,20 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User  
+from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
     TrafficSource, NewUser, SalesDistribution, Project,
-    ActiveAuthor, Designation, UserActivity, Location, Company, Shop, Role
+    ActiveAuthor, UserActivity, Location, Company, Shop, Role
 )
 from .serializers import (
-    UserSerializer, RegisterSerializer, TrafficSourceSerializer,
-    NewUserSerializer, SalesDistributionSerializer, ProjectSerializer,
-    ActiveAuthorSerializer, DesignationSerializer, UserActivitySerializer,
-    LocationSerializer, CompanySerializer, ShopSerializer, RoleSerializer
+    UserSerializer, RegisterSerializer,
+    TrafficSourceSerializer, NewUserSerializer,
+    SalesDistributionSerializer, ProjectSerializer,
+    ActiveAuthorSerializer, UserActivitySerializer,
+    LocationSerializer, CompanySerializer, ShopSerializer,
+    RoleSerializer
 )
 
 # Authentication
@@ -38,13 +40,13 @@ class LoginView(APIView):
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-# Dashboard data views
+# Dashboard
 class TotalUsersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         total = User.objects.count()
-        growth = 12.5  # dummy value
+        growth = 12.5
         return Response({'total': total, 'growth': growth})
 
 class TrafficSourcesView(APIView):
@@ -89,14 +91,6 @@ class ActiveAuthorsView(APIView):
         serializer = ActiveAuthorSerializer(authors, many=True)
         return Response(serializer.data)
 
-class NewDesignationsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        designations = Designation.objects.order_by('-date')[:4]
-        serializer = DesignationSerializer(designations, many=True)
-        return Response(serializer.data)
-
 class UserActivityView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -105,7 +99,7 @@ class UserActivityView(APIView):
         serializer = UserActivitySerializer(activities, many=True)
         return Response(serializer.data)
 
-# User CRUD
+# Users
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -116,7 +110,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Role
+# Roles
 class RoleListCreate(generics.ListCreateAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
@@ -127,7 +121,18 @@ class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Location
+# Companies
+class CompanyListCreate(generics.ListCreateAPIView):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class CompanyRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# Locations
 class LocationListCreate(generics.ListCreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -145,18 +150,7 @@ class LocationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LocationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Company
-class CompanyListCreate(generics.ListCreateAPIView):
-    queryset = Company.objects.all()
-    serializer_class = CompanySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class CompanyRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Company.objects.all()
-    serializer_class = CompanySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-# Shop
+# Shops
 class ShopListCreate(generics.ListCreateAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
@@ -172,15 +166,4 @@ class ShopListCreate(generics.ListCreateAPIView):
 class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-# Designation
-class DesignationListCreate(generics.ListCreateAPIView):
-    queryset = Designation.objects.all()
-    serializer_class = DesignationSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class DesignationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Designation.objects.all()
-    serializer_class = DesignationSerializer
     permission_classes = [permissions.IsAuthenticated]

@@ -1,15 +1,14 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
-    Profile, Company, Location, Shop, Role, Designation,
+    Profile, Role, Company, Location, Shop,
     TrafficSource, NewUser, SalesDistribution, Project,
     ProjectTask, ActiveAuthor, UserActivity
 )
 
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
-    users_count = serializers.IntegerField(source='profiles.count', read_only=True)
-    role = serializers.CharField(source='profile.role', required=False, allow_blank=True)
+    role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
     status = serializers.CharField(source='profile.status', required=False, default='Pending')
     steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
@@ -17,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
     shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
 
-    # Read-only fields
+    # Read‑only fields
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
@@ -34,25 +33,28 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile', {})
+        role = validated_data.pop('role', None)
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
-        Profile.objects.create(user=user, **profile_data)
+        Profile.objects.create(user=user, role=role, **profile_data)
         return user
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', {})
+        role = validated_data.pop('role', None)
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
         profile, created = Profile.objects.get_or_create(user=instance)
+        if role is not None:
+            profile.role = role
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
         return instance
-
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -70,7 +72,40 @@ class RegisterSerializer(serializers.ModelSerializer):
         Profile.objects.create(user=user)
         return user
 
+class RoleSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    shop_name = serializers.CharField(source='shop.name', read_only=True)
+    users_count = serializers.IntegerField(source='profiles.count', read_only=True)
 
+    class Meta:
+        model = Role
+        fields = '__all__'
+
+class CompanySerializer(serializers.ModelSerializer):
+    locations_count = serializers.IntegerField(source='locations.count', read_only=True)
+
+    class Meta:
+        model = Company
+        fields = ['id', 'name', 'locations_count', 'created_at']
+
+class LocationSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    shops_count = serializers.IntegerField(source='shops.count', read_only=True)
+
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'company', 'company_name', 'shops_count', 'created_at']
+
+class ShopSerializer(serializers.ModelSerializer):
+    location_name = serializers.CharField(source='location.name', read_only=True)
+    company_name = serializers.CharField(source='location.company.name', read_only=True)
+
+    class Meta:
+        model = Shop
+        fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
+
+# Dashboard serializers (keep existing ones)
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource
@@ -103,44 +138,7 @@ class ActiveAuthorSerializer(serializers.ModelSerializer):
         model = ActiveAuthor
         fields = '__all__'
 
-class DesignationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Designation
-        fields = '__all__'
-
 class UserActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserActivity
-        fields = '__all__'
-
-class CompanySerializer(serializers.ModelSerializer):
-    locations_count = serializers.IntegerField(source='locations.count', read_only=True)
-
-    class Meta:
-        model = Company
-        fields = ['id', 'name', 'locations_count', 'created_at']
-
-class LocationSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    shops_count = serializers.IntegerField(source='shops.count', read_only=True)
-
-    class Meta:
-        model = Location
-        fields = ['id', 'name', 'company', 'company_name', 'shops_count', 'created_at']
-
-class ShopSerializer(serializers.ModelSerializer):
-    location_name = serializers.CharField(source='location.name', read_only=True)
-    company_name = serializers.CharField(source='location.company.name', read_only=True)
-
-    class Meta:
-        model = Shop
-        fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
-
-class RoleSerializer(serializers.ModelSerializer):
-    company_name = serializers.CharField(source='company.name', read_only=True)
-    location_name = serializers.CharField(source='location.name', read_only=True)
-    shop_name = serializers.CharField(source='shop.name', read_only=True)
-
-    class Meta:
-        model = Role
         fields = '__all__'
