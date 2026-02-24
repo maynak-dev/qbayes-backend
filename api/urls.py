@@ -35,4 +35,6 @@ urlpatterns = [
     # Shops
     path('shops/', ShopListCreate.as_view(), name='shop-list'),
     path('shops/<int:pk>/', ShopRetrieveUpdateDestroy.as_view(), name='shop-detail'),
+
+    path('profiles/<int:user_id>/', ProfileUpdateView.as_view(), name='profile-update'),
 ]

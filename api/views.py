@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (
     TrafficSource, NewUser, SalesDistribution, Project,
     ActiveAuthor, UserActivity, Location, Company, Shop, Role,
-    Designation
+    Designation, Profile
 )
 from .serializers import (
     UserSerializer, RegisterSerializer,
@@ -16,7 +16,7 @@ from .serializers import (
     SalesDistributionSerializer, ProjectSerializer,
     ActiveAuthorSerializer, UserActivitySerializer,
     LocationSerializer, CompanySerializer, ShopSerializer,
-    RoleSerializer, DesignationSerializer
+    RoleSerializer, DesignationSerializer, ProfileSerializer
 )
 
 # Authentication
@@ -183,3 +183,12 @@ class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class ProfileUpdateView(generics.UpdateAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        # Allow updating profile of any user? Maybe restrict to own or with permission.
+        return Profile.objects.get(user_id=self.kwargs['user_id'])
