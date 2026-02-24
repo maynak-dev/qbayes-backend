@@ -4,7 +4,7 @@ from .models import (
     Profile, Role, Company, Location, Shop,
     TrafficSource, NewUser, SalesDistribution, Project,
     ProjectTask, ActiveAuthor, UserActivity,
-    Designation 
+    Designation
 )
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class RoleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
-    role_details = RoleSerializer(source='role', read_only=True)   # nested role details
+    role_details = RoleSerializer(source='role', read_only=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
     status = serializers.CharField(source='profile.status', required=False, default='Pending')
     steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
@@ -28,7 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
     shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
 
-    # Read‑only fields
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
@@ -107,7 +106,6 @@ class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
-
 
 class DesignationSerializer(serializers.ModelSerializer):
     class Meta:

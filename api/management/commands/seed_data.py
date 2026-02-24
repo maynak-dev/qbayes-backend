@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, UserActivity, Company, Location, Shop, Role
+    ActiveAuthor, UserActivity, Company, Location, Shop, Role, Designation
 )
 
 class Command(BaseCommand):
@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         fake = Faker()
 
-        # 1. TrafficSources
+        # TrafficSources
         TrafficSource.objects.all().delete()
         sources = [
             {'name': 'Search', 'visitors': random.randint(800, 1500)},
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             TrafficSource.objects.create(name=src['name'], visitors=src['visitors'])
         self.stdout.write('✅ Traffic sources')
 
-        # 2. NewUsers
+        # NewUsers
         NewUser.objects.all().delete()
         roles = ['HR Manager', 'Developer', 'Designer', 'Sales']
         emojis = ['👩', '👨', '🧔', '👩‍🦰']
@@ -38,14 +38,14 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ New users')
 
-        # 3. SalesDistribution
+        # SalesDistribution
         SalesDistribution.objects.all().delete()
         cities = ['NYC', 'LDN', 'PAR', 'TOK', 'BER']
         for city in cities:
             SalesDistribution.objects.create(city=city, sales=random.randint(1500, 10000))
         self.stdout.write('✅ Sales distribution')
 
-        # 4. Project & Tasks
+        # Project & Tasks
         Project.objects.all().delete()
         project = Project.objects.create(
             name='Triton Dashboard',
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         ProjectTask.objects.create(project=project, name='Development', icon='💻', status='In Progress')
         self.stdout.write('✅ Project')
 
-        # 5. ActiveAuthors
+        # ActiveAuthors
         ActiveAuthor.objects.all().delete()
         for i in range(4):
             ActiveAuthor.objects.create(
@@ -67,7 +67,7 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ Active authors')
 
-        # 6. UserActivity
+        # UserActivity
         UserActivity.objects.all().delete()
         months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
         for month in months:
@@ -78,7 +78,7 @@ class Command(BaseCommand):
             )
         self.stdout.write('✅ User activity')
 
-        # 7. Companies
+        # Companies
         Company.objects.all().delete()
         companies = []
         for _ in range(5):
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             companies.append(comp)
         self.stdout.write('✅ Companies')
 
-        # 8. Locations (linked to companies)
+        # Locations
         Location.objects.all().delete()
         locations = []
         for _ in range(8):
@@ -97,7 +97,7 @@ class Command(BaseCommand):
             locations.append(loc)
         self.stdout.write('✅ Locations')
 
-        # 9. Shops (linked to locations)
+        # Shops
         Shop.objects.all().delete()
         shops = []
         for _ in range(12):
@@ -108,7 +108,7 @@ class Command(BaseCommand):
             shops.append(shop)
         self.stdout.write('✅ Shops')
 
-        # 10. Roles (must have non‑null company, location, shop)
+        # Roles
         Role.objects.all().delete()
         role_data = [
             {'name': 'Admin', 'desc': 'Full system access', 'perm': True},
@@ -117,7 +117,6 @@ class Command(BaseCommand):
         ]
         all_shops = list(Shop.objects.all())
         for rd in role_data:
-            # pick a random shop – its location and company will be used
             shop = random.choice(all_shops)
             company = shop.location.company
             location = shop.location
@@ -137,4 +136,19 @@ class Command(BaseCommand):
                 user_view=True,
             )
         self.stdout.write('✅ Roles')
+
+        # Designations
+        Designation.objects.all().delete()
+        titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
+        companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
+        colors = ['#3e97ff', '#ffc700', '#f1416c', '#50cd89']
+        for i in range(4):
+            Designation.objects.create(
+                title=titles[i],
+                company=companies_list[i],
+                date=fake.date_between(start_date='-30d', end_date='today'),
+                color=colors[i]
+            )
+        self.stdout.write('✅ Designations')
+
         self.stdout.write(self.style.SUCCESS('🎉 All data seeded!'))

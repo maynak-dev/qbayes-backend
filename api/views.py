@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (
     TrafficSource, NewUser, SalesDistribution, Project,
     ActiveAuthor, UserActivity, Location, Company, Shop, Role,
-    Designation  # 👈 added
+    Designation
 )
 from .serializers import (
     UserSerializer, RegisterSerializer,
@@ -17,7 +17,7 @@ from .serializers import (
     ActiveAuthorSerializer, UserActivitySerializer,
     LocationSerializer, CompanySerializer, ShopSerializer,
     RoleSerializer,
-    DesignationSerializer  # 👈 added
+    DesignationSerializer
 )
 
 # Authentication
@@ -93,7 +93,7 @@ class ActiveAuthorsView(APIView):
         serializer = ActiveAuthorSerializer(authors, many=True)
         return Response(serializer.data)
 
-class NewDesignationsView(APIView):  # 👈 added
+class NewDesignationsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
