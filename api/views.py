@@ -116,6 +116,13 @@ class RoleListCreate(generics.ListCreateAPIView):
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        shop_id = self.request.query_params.get('shop')
+        if shop_id:
+            queryset = queryset.filter(shop_id=shop_id)
+        return queryset
+
 class RoleRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
