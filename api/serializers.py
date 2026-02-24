@@ -44,33 +44,42 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        profile_data = validated_data.pop('profile', {})
+        # Extract profile fields (those with source='profile.xxx')
+        profile_fields = {}
+        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
+            if field in validated_data:
+                profile_fields[field] = validated_data.pop(field)
         role = validated_data.pop('role', None)
+
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
-        Profile.objects.create(user=user, role=role, **profile_data)
+        Profile.objects.create(user=user, role=role, **profile_fields)
         return user
-    
-    def update(self, instance, validated_data):
-        print("🔵 validated_data keys:", validated_data.keys())
-        profile_data = validated_data.pop('profile', {})
-        role = validated_data.pop('role', None)
-        print("🔵 role extracted:", role, "type:", type(role))
 
+    def update(self, instance, validated_data):
+        # Extract profile fields
+        profile_fields = {}
+        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
+            if field in validated_data:
+                profile_fields[field] = validated_data.pop(field)
+
+        role = validated_data.pop('role', None)
+
+        # Update user fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
+        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
-            print("🔵 assigned role to profile")
-        for attr, value in profile_data.items():
+        for attr, value in profile_fields.items():
             setattr(profile, attr, value)
         profile.save()
-        print("🔵 profile saved, role_id =", profile.role_id)
+
         return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
