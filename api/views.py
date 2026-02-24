@@ -184,11 +184,16 @@ class ShopRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ShopSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+from rest_framework import generics, permissions
+from .models import Profile
+from .serializers import ProfileSerializer
+
 class ProfileUpdateView(generics.UpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # Allow updating profile of any user? Maybe restrict to own or with permission.
-        return Profile.objects.get(user_id=self.kwargs['user_id'])
+        # Return the profile for the user specified in the URL
+        user_id = self.kwargs['user_id']
+        return Profile.objects.get(user_id=user_id)

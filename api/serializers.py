@@ -1,14 +1,6 @@
-import logging
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import (
-    Profile, Role, Company, Location, Shop,
-    TrafficSource, NewUser, SalesDistribution, Project,
-    ProjectTask, ActiveAuthor, UserActivity,
-    Designation
-)
-
-logger = logging.getLogger(__name__)
+from .models import Profile, Role, Company, Location, Shop
 
 class RoleSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -20,16 +12,24 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = '__all__'
 
-class UserSerializer(serializers.ModelSerializer):
-    # Profile fields – each mapped to the profile's attributes
+class ProfileSerializer(serializers.ModelSerializer):
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     role_details = RoleSerializer(source='role', read_only=True)
-    phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
-    status = serializers.CharField(source='profile.status', required=False, default='Pending')
-    steps = serializers.IntegerField(source='profile.steps', required=False, default=0)
-    company = serializers.CharField(source='profile.company', required=False, allow_blank=True)
-    location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
-    shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
+
+    class Meta:
+        model = Profile
+        fields = ['id', 'user', 'role', 'role_details', 'phone', 'status', 'steps', 'company', 'location', 'shop']
+        read_only_fields = ['user']  # user is read-only because it's set via the user instance
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)  # only for GET, not for write
+    role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), write_only=True, required=False, allow_null=True)
+    phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    status = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    steps = serializers.IntegerField(write_only=True, required=False, default=0)
+    company = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    location = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    shop = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
@@ -37,84 +37,39 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'name',
-            'role', 'role_details',
-            'phone', 'status', 'steps',
-            'company', 'location', 'shop', 'created_at'
+            'id', 'username', 'email', 'name', 'created_at',
+            'profile',  # nested read‑only profile
+            'role', 'phone', 'status', 'steps', 'company', 'location', 'shop'  # write‑only fields for updates
         ]
 
     def get_name(self, obj):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        try:
-            # Extract profile fields
-            phone = validated_data.pop('phone', '')
-            status = validated_data.pop('status', 'Pending')
-            steps = validated_data.pop('steps', 0)
-            company = validated_data.pop('company', '')
-            location = validated_data.pop('location', '')
-            shop = validated_data.pop('shop', '')
-            role = validated_data.pop('role', None)
+        # Extract profile fields
+        profile_fields = {}
+        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
+            if field in validated_data:
+                profile_fields[field] = validated_data.pop(field)
+        role = validated_data.pop('role', None)
 
-            # Extract user fields
-            username = validated_data.get('username')
-            email = validated_data.get('email', '')
-            # Note: first_name and last_name are not in validated_data because they are not fields.
-            # If you want to support them, you need to add them as fields.
-
-            user = User.objects.create_user(
-                username=username,
-                email=email
-            )
-            Profile.objects.create(
-                user=user,
-                role=role,
-                phone=phone,
-                status=status,
-                steps=steps,
-                company=company,
-                location=location,
-                shop=shop
-            )
-            return user
-        except Exception as e:
-            raise serializers.ValidationError({"detail": f"Creation failed: {str(e)}"})
+        user = User.objects.create_user(
+            username=validated_data.get('username'),
+            email=validated_data.get('email', '')
+        )
+        Profile.objects.create(user=user, role=role, **profile_fields)
+        return user
 
     def update(self, instance, validated_data):
-        try:
-            # Update user fields
-            if 'username' in validated_data:
-                instance.username = validated_data['username']
-            if 'email' in validated_data:
-                instance.email = validated_data['email']
-            instance.save()
+        # Update user fields
+        if 'username' in validated_data:
+            instance.username = validated_data['username']
+        if 'email' in validated_data:
+            instance.email = validated_data['email']
+        instance.save()
 
-            # Get or create profile
-            profile, created = Profile.objects.get_or_create(user=instance)
-
-            # Update profile fields
-            if 'phone' in validated_data:
-                profile.phone = validated_data['phone']
-            if 'status' in validated_data:
-                profile.status = validated_data['status']
-            if 'steps' in validated_data:
-                profile.steps = validated_data['steps']
-            if 'company' in validated_data:
-                profile.company = validated_data['company']
-            if 'location' in validated_data:
-                profile.location = validated_data['location']
-            if 'shop' in validated_data:
-                profile.shop = validated_data['shop']
-
-            # Update role (validated_data['role'] is already a Role instance or None)
-            if 'role' in validated_data:
-                profile.role = validated_data['role']
-
-            profile.save()
-            return instance
-        except Exception as e:
-            raise serializers.ValidationError({"detail": f"Update failed: {str(e)}"})
+        # The profile fields are handled separately via the profile update endpoint
+        return instance
 
 
 class RegisterSerializer(serializers.ModelSerializer):
