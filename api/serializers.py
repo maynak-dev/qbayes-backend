@@ -68,6 +68,8 @@ class UserSerializer(serializers.ModelSerializer):
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
+            profile.save()
+            print("Profile role after save:", profile.role_id)
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
