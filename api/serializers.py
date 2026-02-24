@@ -54,12 +54,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        print("🔵 Validated data keys:", validated_data.keys())
         profile_data = validated_data.pop('profile', {})
         role = validated_data.pop('role', None)
+        print("🔵 Role extracted:", role)
+
+        # Update User fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
+        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
