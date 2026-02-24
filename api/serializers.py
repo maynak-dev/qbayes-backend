@@ -18,7 +18,6 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-    # Profile fields
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     role_details = RoleSerializer(source='role', read_only=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
@@ -58,7 +57,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
@@ -66,12 +64,10 @@ class UserSerializer(serializers.ModelSerializer):
 
         role = validated_data.pop('role', None)
 
-        # Update user fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
-        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
