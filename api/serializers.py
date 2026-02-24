@@ -46,77 +46,90 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        # Extract profile fields
-        phone = validated_data.pop('phone', '')
-        status = validated_data.pop('status', 'Pending')
-        steps = validated_data.pop('steps', 0)
-        company = validated_data.pop('company', '')
-        location = validated_data.pop('location', '')
-        shop = validated_data.pop('shop', '')
-        role = validated_data.pop('role', None)
+        try:
+            print("🔵 [CREATE] validated_data:", validated_data)
+            # Extract profile fields
+            phone = validated_data.pop('phone', '')
+            status = validated_data.pop('status', 'Pending')
+            steps = validated_data.pop('steps', 0)
+            company = validated_data.pop('company', '')
+            location = validated_data.pop('location', '')
+            shop = validated_data.pop('shop', '')
+            role = validated_data.pop('role', None)
 
-        user = User.objects.create_user(
-            username=validated_data.get('username'),
-            email=validated_data.get('email', '')
-        )
-        Profile.objects.create(
-            user=user,
-            role=role,
-            phone=phone,
-            status=status,
-            steps=steps,
-            company=company,
-            location=location,
-            shop=shop
-        )
-        return user
+            user = User.objects.create_user(
+                username=validated_data.get('username'),
+                email=validated_data.get('email', '')
+            )
+            Profile.objects.create(
+                user=user,
+                role=role,
+                phone=phone,
+                status=status,
+                steps=steps,
+                company=company,
+                location=location,
+                shop=shop
+            )
+            return user
+        except Exception as e:
+            print("🔴 [CREATE] error:", str(e))
+            raise
 
     def update(self, instance, validated_data):
-        print("\n🔵 [UPDATE] instance ID:", instance.id)
-        print("🔵 [UPDATE] validated_data keys:", validated_data.keys())
+        try:
+            print("\n🔵 [UPDATE] instance ID:", instance.id)
+            print("🔵 [UPDATE] validated_data keys:", validated_data.keys())
 
-        # Update user fields
-        if 'username' in validated_data:
-            instance.username = validated_data['username']
-        if 'email' in validated_data:
-            instance.email = validated_data['email']
-        instance.save()
+            # Update user fields
+            if 'username' in validated_data:
+                instance.username = validated_data['username']
+            if 'email' in validated_data:
+                instance.email = validated_data['email']
+            instance.save()
 
-        # Get or create profile
-        profile, created = Profile.objects.get_or_create(user=instance)
+            # Get or create profile
+            profile, created = Profile.objects.get_or_create(user=instance)
 
-        # Update profile fields
-        if 'phone' in validated_data:
-            profile.phone = validated_data['phone']
-        if 'status' in validated_data:
-            profile.status = validated_data['status']
-        if 'steps' in validated_data:
-            profile.steps = validated_data['steps']
-        if 'company' in validated_data:
-            profile.company = validated_data['company']
-        if 'location' in validated_data:
-            profile.location = validated_data['location']
-        if 'shop' in validated_data:
-            profile.shop = validated_data['shop']
+            # Update profile fields
+            if 'phone' in validated_data:
+                profile.phone = validated_data['phone']
+            if 'status' in validated_data:
+                profile.status = validated_data['status']
+            if 'steps' in validated_data:
+                profile.steps = validated_data['steps']
+            if 'company' in validated_data:
+                profile.company = validated_data['company']
+            if 'location' in validated_data:
+                profile.location = validated_data['location']
+            if 'shop' in validated_data:
+                profile.shop = validated_data['shop']
 
-        # Update role
-        if 'role' in validated_data:
-            role_id = validated_data['role']
-            if role_id is not None:
-                try:
-                    role = Role.objects.get(id=role_id)
-                    profile.role = role
-                    print(f"🔵 [UPDATE] role assigned: {role.name}")
-                except Role.DoesNotExist:
-                    print(f"🔴 [UPDATE] role with id {role_id} does not exist")
+            # Update role
+            if 'role' in validated_data:
+                role_id = validated_data['role']
+                if role_id is not None:
+                    try:
+                        role = Role.objects.get(id=role_id)
+                        profile.role = role
+                        print(f"🔵 [UPDATE] role assigned: {role.name}")
+                    except Role.DoesNotExist:
+                        print(f"🔴 [UPDATE] role with id {role_id} does not exist")
+                        profile.role = None
+                else:
                     profile.role = None
-            else:
-                profile.role = None
 
-        profile.save()
-        print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
+            profile.save()
+            print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
+            return instance
 
-        return instance
+        except Exception as e:
+            print("🔴 [UPDATE] error:", str(e))
+            import traceback
+            traceback.print_exc()
+            raise
+
+# ... rest of the serializers (unchanged)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
