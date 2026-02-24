@@ -52,27 +52,25 @@ class UserSerializer(serializers.ModelSerializer):
         )
         Profile.objects.create(user=user, role=role, **profile_data)
         return user
-
+    
     def update(self, instance, validated_data):
-        print("🔵 Validated data keys:", validated_data.keys())
+        print("🔵 validated_data keys:", validated_data.keys())
         profile_data = validated_data.pop('profile', {})
         role = validated_data.pop('role', None)
-        print("🔵 Role extracted:", role)
+        print("🔵 role extracted:", role, "type:", type(role))
 
-        # Update User fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.save()
 
-        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
-            profile.save()
-            print("Profile role after save:", profile.role_id)
+            print("🔵 assigned role to profile")
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
+        print("🔵 profile saved, role_id =", profile.role_id)
         return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
