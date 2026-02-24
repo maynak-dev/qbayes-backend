@@ -1,3 +1,4 @@
+import logging
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
@@ -6,6 +7,8 @@ from .models import (
     ProjectTask, ActiveAuthor, UserActivity,
     Designation
 )
+
+logger = logging.getLogger(__name__)
 
 class RoleSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -18,7 +21,6 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-    # Profile fields – mapped to the related Profile object
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     role_details = RoleSerializer(source='role', read_only=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
@@ -28,7 +30,6 @@ class UserSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
     shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
 
-    # User fields
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
@@ -46,40 +47,74 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Extract profile fields
-        profile_data = {}
-        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
-            if field in validated_data:
-                profile_data[field] = validated_data.pop(field)
+        phone = validated_data.pop('phone', '')
+        status = validated_data.pop('status', 'Pending')
+        steps = validated_data.pop('steps', 0)
+        company = validated_data.pop('company', '')
+        location = validated_data.pop('location', '')
+        shop = validated_data.pop('shop', '')
         role = validated_data.pop('role', None)
 
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
-        Profile.objects.create(user=user, role=role, **profile_data)
+        Profile.objects.create(
+            user=user,
+            role=role,
+            phone=phone,
+            status=status,
+            steps=steps,
+            company=company,
+            location=location,
+            shop=shop
+        )
         return user
 
     def update(self, instance, validated_data):
-        # Extract profile fields
-        profile_data = {}
-        for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
-            if field in validated_data:
-                profile_data[field] = validated_data.pop(field)
-
-        role = validated_data.pop('role', None)
+        print("\n🔵 [UPDATE] instance ID:", instance.id)
+        print("🔵 [UPDATE] validated_data keys:", validated_data.keys())
 
         # Update user fields
-        instance.username = validated_data.get('username', instance.username)
-        instance.email = validated_data.get('email', instance.email)
+        if 'username' in validated_data:
+            instance.username = validated_data['username']
+        if 'email' in validated_data:
+            instance.email = validated_data['email']
         instance.save()
 
-        # Update or create profile
+        # Get or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
-        if role is not None:
-            profile.role = role
-        for attr, value in profile_data.items():
-            setattr(profile, attr, value)
+
+        # Update profile fields
+        if 'phone' in validated_data:
+            profile.phone = validated_data['phone']
+        if 'status' in validated_data:
+            profile.status = validated_data['status']
+        if 'steps' in validated_data:
+            profile.steps = validated_data['steps']
+        if 'company' in validated_data:
+            profile.company = validated_data['company']
+        if 'location' in validated_data:
+            profile.location = validated_data['location']
+        if 'shop' in validated_data:
+            profile.shop = validated_data['shop']
+
+        # Update role
+        if 'role' in validated_data:
+            role_id = validated_data['role']
+            if role_id is not None:
+                try:
+                    role = Role.objects.get(id=role_id)
+                    profile.role = role
+                    print(f"🔵 [UPDATE] role assigned: {role.name}")
+                except Role.DoesNotExist:
+                    print(f"🔴 [UPDATE] role with id {role_id} does not exist")
+                    profile.role = None
+            else:
+                profile.role = None
+
         profile.save()
+        print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
 
         return instance
 
