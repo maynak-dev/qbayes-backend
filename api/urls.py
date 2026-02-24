@@ -16,9 +16,10 @@ urlpatterns = [
     path('dashboard/new-designations/', NewDesignationsView.as_view(), name='new-designations'),
     path('dashboard/user-activity/', UserActivityView.as_view(), name='user-activity'),
 
-    # Users - combined list and create
+    # Users
     path('users/', UserListCreateView.as_view(), name='user-list-create'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
+
     # Roles
     path('roles/', RoleListCreate.as_view(), name='role-list'),
     path('roles/<int:pk>/', RoleRetrieveUpdateDestroy.as_view(), name='role-detail'),

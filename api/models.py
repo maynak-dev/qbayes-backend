@@ -1,8 +1,58 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from django.db import models
-from django.contrib.auth.models import User
+class Company(models.Model):
+    name = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Location(models.Model):
+    name = models.CharField(max_length=100)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='locations')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.company.name})"
+
+class Shop(models.Model):
+    name = models.CharField(max_length=200)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='shops')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.location.name})"
+
+class Role(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    
+    # Role Management permissions
+    role_create = models.BooleanField(default=False)
+    role_edit = models.BooleanField(default=False)
+    role_delete = models.BooleanField(default=False)
+    role_view = models.BooleanField(default=False)
+    
+    # User Management permissions
+    user_create = models.BooleanField(default=False)
+    user_edit = models.BooleanField(default=False)
+    user_delete = models.BooleanField(default=False)
+    user_view = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Designation(models.Model):
+    title = models.CharField(max_length=100)
+    company = models.CharField(max_length=100)
+    date = models.DateField()
+    color = models.CharField(max_length=7)  # hex color
+
+    def __str__(self):
+        return self.title
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -17,41 +67,7 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-class Location(models.Model):
-    name = models.CharField(max_length=100)
-    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='locations')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.company.name})"
-
-class Company(models.Model):
-    name = models.CharField(max_length=200)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-class Shop(models.Model):
-    name = models.CharField(max_length=200)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='shops')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.location.name})"
-
-class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class Designation(models.Model):
-    title = models.CharField(max_length=100)
-    company = models.CharField(max_length=100)
-    date = models.DateField()
-    color = models.CharField(max_length=7)
-
-
+# Dashboard models
 class TrafficSource(models.Model):
     name = models.CharField(max_length=50)
     visitors = models.IntegerField()
@@ -69,7 +85,7 @@ class SalesDistribution(models.Model):
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    progress = models.IntegerField()  # percentage
+    progress = models.IntegerField()
     due_days = models.IntegerField()
 
 class ProjectTask(models.Model):
@@ -83,12 +99,6 @@ class ActiveAuthor(models.Model):
     role = models.CharField(max_length=100)
     progress = models.IntegerField()
     trend = models.CharField(max_length=10)  # 'up' or 'down'
-
-class Designation(models.Model):
-    title = models.CharField(max_length=100)
-    company = models.CharField(max_length=100)
-    date = models.DateField()
-    color = models.CharField(max_length=7)  # hex color
 
 class UserActivity(models.Model):
     month = models.CharField(max_length=3)  # Jan, Feb, etc.

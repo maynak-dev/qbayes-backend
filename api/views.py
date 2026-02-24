@@ -2,10 +2,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User  
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
-    User, TrafficSource, NewUser, SalesDistribution, Project,
+    TrafficSource, NewUser, SalesDistribution, Project,
     ActiveAuthor, Designation, UserActivity, Location, Company, Shop, Role
 )
 from .serializers import (

@@ -3,7 +3,8 @@ from django.core.management.base import BaseCommand
 from faker import Faker
 from api.models import (
     TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, Designation, UserActivity, Location, Company, Shop
+    ActiveAuthor, Designation, UserActivity, Location, Company, Shop,
+    Role  # Role model should now include permission fields
 )
 
 class Command(BaseCommand):
@@ -127,7 +128,56 @@ class Command(BaseCommand):
             shops.append(shop)
         self.stdout.write(f'✅ Created {len(shops)} shops')
 
-        # 11. Additional Designations (for role dropdown)
+        # 11. Roles (with permissions)
+        Role.objects.all().delete()
+        role_data = [
+            {
+                'name': 'Admin',
+                'description': 'Full system access',
+                'role_create': True, 'role_edit': True, 'role_delete': True, 'role_view': True,
+                'user_create': True, 'user_edit': True, 'user_delete': True, 'user_view': True,
+            },
+            {
+                'name': 'Manager',
+                'description': 'Can manage users and view roles',
+                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': True,
+                'user_create': True, 'user_edit': True, 'user_delete': False, 'user_view': True,
+            },
+            {
+                'name': 'Employee',
+                'description': 'Basic user with view permissions',
+                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': False,
+                'user_create': False, 'user_edit': False, 'user_delete': False, 'user_view': True,
+            },
+            {
+                'name': 'HR',
+                'description': 'HR personnel',
+                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': True,
+                'user_create': True, 'user_edit': True, 'user_delete': False, 'user_view': True,
+            },
+            {
+                'name': 'Sales',
+                'description': 'Sales team',
+                'role_create': False, 'role_edit': False, 'role_delete': False, 'role_view': False,
+                'user_create': False, 'user_edit': False, 'user_delete': False, 'user_view': True,
+            }
+        ]
+        for rd in role_data:
+            Role.objects.create(
+                name=rd['name'],
+                description=rd['description'],
+                role_create=rd['role_create'],
+                role_edit=rd['role_edit'],
+                role_delete=rd['role_delete'],
+                role_view=rd['role_view'],
+                user_create=rd['user_create'],
+                user_edit=rd['user_edit'],
+                user_delete=rd['user_delete'],
+                user_view=rd['user_view']
+            )
+        self.stdout.write(f'✅ Created {len(role_data)} roles with permissions')
+
+        # 12. Additional Designations (for dashboard widget only)
         extra_titles = [
             'HR Manager', 'Developer', 'Designer', 'Sales', 'QA Lead',
             'Product Owner', 'Senior Director', 'Compliance', 'Marketing',
@@ -140,6 +190,6 @@ class Command(BaseCommand):
                 date=fake.date_between(start_date='-60d', end_date='today'),
                 color=random.choice(['#3e97ff', '#ffc700', '#f1416c', '#50cd89', '#7e8299'])
             )
-        self.stdout.write(f'✅ Added extra designations for role dropdown')
+        self.stdout.write(f'✅ Added extra designations for dashboard widget')
 
         self.stdout.write(self.style.SUCCESS('🎉 Database seeded successfully!'))

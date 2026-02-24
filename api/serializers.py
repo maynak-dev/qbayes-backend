@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import *
+from .models import (
+    Profile, Company, Location, Shop, Role, Designation,
+    TrafficSource, NewUser, SalesDistribution, Project,
+    ProjectTask, ActiveAuthor, UserActivity
+)
 
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields
@@ -130,12 +134,6 @@ class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
-
-    def get_company_name(self, obj):
-        return obj.company.name if obj.company else None
-
-    def get_location_name(self, obj):
-        return obj.location.name if obj.location else None
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
