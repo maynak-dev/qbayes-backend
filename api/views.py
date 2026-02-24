@@ -16,8 +16,7 @@ from .serializers import (
     SalesDistributionSerializer, ProjectSerializer,
     ActiveAuthorSerializer, UserActivitySerializer,
     LocationSerializer, CompanySerializer, ShopSerializer,
-    RoleSerializer,
-    DesignationSerializer
+    RoleSerializer, DesignationSerializer
 )
 
 # Authentication

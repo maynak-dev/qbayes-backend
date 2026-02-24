@@ -63,9 +63,9 @@ class Profile(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, default='Pending')
     steps = models.IntegerField(default=0)
-    company = models.CharField(max_length=100, blank=True)
-    location = models.CharField(max_length=100, blank=True)
-    shop = models.CharField(max_length=100, blank=True)
+    company = models.CharField(max_length=100, blank=True)  # company name (string)
+    location = models.CharField(max_length=100, blank=True) # location name (string)
+    shop = models.CharField(max_length=100, blank=True)      # shop name (string)
 
     def __str__(self):
         return f"{self.user.username}'s profile"

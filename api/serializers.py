@@ -1,4 +1,3 @@
-import logging
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
@@ -7,8 +6,6 @@ from .models import (
     ProjectTask, ActiveAuthor, UserActivity,
     Designation
 )
-
-logger = logging.getLogger(__name__)
 
 class RoleSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -21,6 +18,7 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
+    # Profile fields – mapped to the related Profile object
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), allow_null=True, required=False)
     role_details = RoleSerializer(source='role', read_only=True)
     phone = serializers.CharField(source='profile.phone', required=False, allow_blank=True)
@@ -30,6 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='profile.location', required=False, allow_blank=True)
     shop = serializers.CharField(source='profile.shop', required=False, allow_blank=True)
 
+    # User fields
     name = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
@@ -46,69 +45,44 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        print("\n🔵 [CREATE] validated_data:", validated_data)
         # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
                 profile_data[field] = validated_data.pop(field)
         role = validated_data.pop('role', None)
-        print("🔵 [CREATE] profile_data:", profile_data)
-        print("🔵 [CREATE] role:", role)
 
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
         Profile.objects.create(user=user, role=role, **profile_data)
-        print("🔵 [CREATE] user created, profile created")
         return user
 
     def update(self, instance, validated_data):
-        print("\n🔵 [UPDATE] instance ID:", instance.id)
-        print("🔵 [UPDATE] validated_data:", validated_data)
-
         # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
                 profile_data[field] = validated_data.pop(field)
+
         role = validated_data.pop('role', None)
-        print("🔵 [UPDATE] profile_data:", profile_data)
-        print("🔵 [UPDATE] role:", role)
 
         # Update user fields
-        user_updated = False
-        if 'username' in validated_data and validated_data['username'] != instance.username:
-            instance.username = validated_data['username']
-            user_updated = True
-        if 'email' in validated_data and validated_data['email'] != instance.email:
-            instance.email = validated_data['email']
-            user_updated = True
-        if user_updated:
-            instance.save()
-            print("🔵 [UPDATE] user updated")
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.save()
 
         # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
-        print("🔵 [UPDATE] profile exists?", not created)
-
         if role is not None:
             profile.role = role
-            print("🔵 [UPDATE] role assigned")
-
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
-            print(f"🔵 [UPDATE] set profile.{attr} = {value}")
-
         profile.save()
-        print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
 
-        # Refresh instance to get updated profile fields
-        instance.refresh_from_db()
         return instance
 
-# Other serializers (unchanged, but keep them as they are)
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -153,7 +127,7 @@ class DesignationSerializer(serializers.ModelSerializer):
         model = Designation
         fields = '__all__'
 
-# Dashboard serializers (unchanged)
+# Dashboard serializers
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource
