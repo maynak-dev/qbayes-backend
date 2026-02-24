@@ -1,154 +1,200 @@
 import random
 from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User
 from faker import Faker
 from api.models import (
-    TrafficSource, NewUser, SalesDistribution, Project, ProjectTask,
-    ActiveAuthor, UserActivity, Company, Location, Shop, Role, Designation
+    Company, Location, Shop, Role, Profile,
+    TrafficSource, NewUser, SalesDistribution, Project,
+    ProjectTask, ActiveAuthor, UserActivity, Designation
 )
 
 class Command(BaseCommand):
-    help = 'Seed database with sample data'
+    help = 'Seed database with realistic data without deleting existing records'
 
     def handle(self, *args, **kwargs):
         fake = Faker()
 
-        # TrafficSources
-        TrafficSource.objects.all().delete()
-        sources = [
-            {'name': 'Search', 'visitors': random.randint(800, 1500)},
-            {'name': 'Direct', 'visitors': random.randint(300, 800)},
-            {'name': 'Social', 'visitors': random.randint(200, 600)},
-            {'name': 'Referral', 'visitors': random.randint(100, 400)},
-            {'name': 'Email', 'visitors': random.randint(50, 300)},
-        ]
-        for src in sources:
-            TrafficSource.objects.create(name=src['name'], visitors=src['visitors'])
-        self.stdout.write('✅ Traffic sources')
+        self.stdout.write('Seeding data...')
 
-        # NewUsers
-        NewUser.objects.all().delete()
-        roles = ['HR Manager', 'Developer', 'Designer', 'Sales']
-        emojis = ['👩', '👨', '🧔', '👩‍🦰']
-        for _ in range(8):
-            NewUser.objects.create(
-                name=fake.name(),
-                role=random.choice(roles),
-                time_added=fake.date_time_between(start_date='-7d', end_date='now'),
-                emoji=random.choice(emojis)
+        # 1. Companies
+        if Company.objects.count() < 5:
+            for _ in range(5 - Company.objects.count()):
+                Company.objects.create(name=fake.unique.company())
+        companies = list(Company.objects.all()[:5])
+        self.stdout.write(f'✅ Using {len(companies)} companies')
+
+        # 2. Locations
+        for company in companies:
+            needed = max(0, random.randint(2, 4) - company.locations.count())
+            for _ in range(needed):
+                Location.objects.create(
+                    name=fake.unique.city(),
+                    company=company
+                )
+        locations = list(Location.objects.filter(company__in=companies))
+        self.stdout.write(f'✅ Using {len(locations)} locations')
+
+        # 3. Shops
+        for location in locations:
+            needed = max(0, random.randint(1, 3) - location.shops.count())
+            for _ in range(needed):
+                Shop.objects.create(
+                    name=fake.unique.word().capitalize() + " Shop",
+                    location=location
+                )
+        shops = list(Shop.objects.filter(location__in=locations))
+        self.stdout.write(f'✅ Using {len(shops)} shops')
+
+        # 4. Roles (create if not exist)
+        role_data = [
+            ('Admin', True),
+            ('Manager', True),
+            ('Employee', False),
+            ('HR', True),
+            ('Sales', False),
+        ]
+        roles = []
+        for name, has_perm in role_data:
+            role, created = Role.objects.get_or_create(
+                name=name,
+                defaults={
+                    'description': fake.sentence(),
+                    'company': random.choice(companies),
+                    'location': random.choice(locations),
+                    'shop': random.choice(shops),
+                    'role_create': has_perm,
+                    'role_edit': has_perm,
+                    'role_delete': has_perm,
+                    'role_view': True,
+                    'user_create': has_perm,
+                    'user_edit': has_perm,
+                    'user_delete': has_perm,
+                    'user_view': True,
+                }
             )
-        self.stdout.write('✅ New users')
+            roles.append(role)
+        self.stdout.write(f'✅ Using {len(roles)} roles')
+
+        # 5. New users with profiles
+        new_users = []
+        for _ in range(10):
+            username = fake.unique.user_name()
+            email = fake.unique.email()
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password='password123',
+                first_name=fake.first_name(),
+                last_name=fake.last_name()
+            )
+            new_users.append(user)
+        self.stdout.write(f'✅ Created {len(new_users)} new users')
+
+        # 6. Profiles for new users
+        for user in new_users:
+            role = random.choice(roles)
+            Profile.objects.create(
+                user=user,
+                role=role,
+                phone=fake.phone_number(),
+                status=random.choice(['Pending', 'Approved', 'Rejected']),
+                steps=random.randint(0, 10),
+                company=role.company.name,
+                location=role.location.name,
+                shop=role.shop.name,
+            )
+        self.stdout.write('✅ Created profiles for new users')
+
+        # 7. Dashboard models (only if missing)
+        # TrafficSource
+        if TrafficSource.objects.count() == 0:
+            for src in [
+                {'name': 'Search', 'visitors': random.randint(800, 1500)},
+                {'name': 'Direct', 'visitors': random.randint(300, 800)},
+                {'name': 'Social', 'visitors': random.randint(200, 600)},
+                {'name': 'Referral', 'visitors': random.randint(100, 400)},
+                {'name': 'Email', 'visitors': random.randint(50, 300)},
+            ]:
+                TrafficSource.objects.create(**src)
+            self.stdout.write('✅ Traffic sources created')
+        else:
+            self.stdout.write('✅ Traffic sources already exist')
+
+        # NewUser widget
+        if NewUser.objects.count() < 8:
+            roles_list = ['HR Manager', 'Developer', 'Designer', 'Sales']
+            emojis = ['👩', '👨', '🧔', '👩‍🦰']
+            for _ in range(8 - NewUser.objects.count()):
+                NewUser.objects.create(
+                    name=fake.name(),
+                    role=random.choice(roles_list),
+                    time_added=fake.date_time_between(start_date='-7d', end_date='now'),
+                    emoji=random.choice(emojis)
+                )
+            self.stdout.write('✅ New users widget seeded')
+        else:
+            self.stdout.write('✅ New users widget already has data')
 
         # SalesDistribution
-        SalesDistribution.objects.all().delete()
-        cities = ['NYC', 'LDN', 'PAR', 'TOK', 'BER']
-        for city in cities:
-            SalesDistribution.objects.create(city=city, sales=random.randint(1500, 10000))
-        self.stdout.write('✅ Sales distribution')
+        if SalesDistribution.objects.count() == 0:
+            for city in ['NYC', 'LDN', 'PAR', 'TOK', 'BER']:
+                SalesDistribution.objects.create(city=city, sales=random.randint(1500, 10000))
+            self.stdout.write('✅ Sales distribution created')
+        else:
+            self.stdout.write('✅ Sales distribution already exists')
 
         # Project & Tasks
-        Project.objects.all().delete()
-        project = Project.objects.create(
-            name='Triton Dashboard',
-            progress=random.randint(60, 90),
-            due_days=random.randint(3, 10)
-        )
-        ProjectTask.objects.create(project=project, name='Design Phase', icon='🎨', status='Done')
-        ProjectTask.objects.create(project=project, name='Development', icon='💻', status='In Progress')
-        self.stdout.write('✅ Project')
-
-        # ActiveAuthors
-        ActiveAuthor.objects.all().delete()
-        for i in range(4):
-            ActiveAuthor.objects.create(
-                name=fake.name(),
-                role=random.choice(['Editor', 'Author', 'Reviewer']),
-                progress=random.randint(70, 99),
-                trend=random.choice(['up', 'down'])
+        if Project.objects.count() == 0:
+            project = Project.objects.create(
+                name='Triton Dashboard',
+                progress=random.randint(60, 90),
+                due_days=random.randint(3, 10)
             )
-        self.stdout.write('✅ Active authors')
+            ProjectTask.objects.create(project=project, name='Design Phase', icon='🎨', status='Done')
+            ProjectTask.objects.create(project=project, name='Development', icon='💻', status='In Progress')
+            self.stdout.write('✅ Project created')
+        else:
+            self.stdout.write('✅ Project already exists')
+
+        # ActiveAuthor
+        if ActiveAuthor.objects.count() < 4:
+            for _ in range(4 - ActiveAuthor.objects.count()):
+                ActiveAuthor.objects.create(
+                    name=fake.name(),
+                    role=random.choice(['Editor', 'Author', 'Reviewer']),
+                    progress=random.randint(70, 99),
+                    trend=random.choice(['up', 'down'])
+                )
+            self.stdout.write('✅ Active authors seeded')
+        else:
+            self.stdout.write('✅ Active authors already have data')
 
         # UserActivity
-        UserActivity.objects.all().delete()
-        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-        for month in months:
-            UserActivity.objects.create(
-                month=month,
-                active_users=random.randint(20, 40),
-                new_users=random.randint(15, 45)
-            )
-        self.stdout.write('✅ User activity')
+        if UserActivity.objects.count() == 0:
+            for month in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']:
+                UserActivity.objects.create(
+                    month=month,
+                    active_users=random.randint(20, 40),
+                    new_users=random.randint(15, 45)
+                )
+            self.stdout.write('✅ User activity created')
+        else:
+            self.stdout.write('✅ User activity already exists')
 
-        # Companies
-        Company.objects.all().delete()
-        companies = []
-        for _ in range(5):
-            comp = Company.objects.create(name=fake.company())
-            companies.append(comp)
-        self.stdout.write('✅ Companies')
+        # Designations (optional)
+        if Designation.objects.count() == 0:
+            titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
+            companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
+            colors = ['#3e97ff', '#ffc700', '#f1416c', '#50cd89']
+            for i in range(4):
+                Designation.objects.create(
+                    title=titles[i],
+                    company=companies_list[i],
+                    date=fake.date_between(start_date='-30d', end_date='today'),
+                    color=colors[i]
+                )
+            self.stdout.write('✅ Designations created')
+        else:
+            self.stdout.write('✅ Designations already exist')
 
-        # Locations
-        Location.objects.all().delete()
-        locations = []
-        for _ in range(8):
-            loc = Location.objects.create(
-                name=fake.city(),
-                company=random.choice(companies)
-            )
-            locations.append(loc)
-        self.stdout.write('✅ Locations')
-
-        # Shops
-        Shop.objects.all().delete()
-        shops = []
-        for _ in range(12):
-            shop = Shop.objects.create(
-                name=fake.word().capitalize() + ' Shop',
-                location=random.choice(locations)
-            )
-            shops.append(shop)
-        self.stdout.write('✅ Shops')
-
-        # Roles
-        Role.objects.all().delete()
-        role_data = [
-            {'name': 'Admin', 'desc': 'Full system access', 'perm': True},
-            {'name': 'Manager', 'desc': 'Can manage users', 'perm': True},
-            {'name': 'Employee', 'desc': 'Basic user', 'perm': False},
-        ]
-        all_shops = list(Shop.objects.all())
-        for rd in role_data:
-            shop = random.choice(all_shops)
-            company = shop.location.company
-            location = shop.location
-            Role.objects.create(
-                name=rd['name'],
-                description=rd['desc'],
-                company=company,
-                location=location,
-                shop=shop,
-                role_create=rd['perm'],
-                role_edit=rd['perm'],
-                role_delete=rd['perm'],
-                role_view=True,
-                user_create=rd['perm'],
-                user_edit=rd['perm'],
-                user_delete=rd['perm'],
-                user_view=True,
-            )
-        self.stdout.write('✅ Roles')
-
-        # Designations
-        Designation.objects.all().delete()
-        titles = ['Senior Director', 'Product Owner', 'QA Lead', 'Compliance']
-        companies_list = ['Triton Tech', 'Optitax Inc', 'Global Services', 'Finance Corp']
-        colors = ['#3e97ff', '#ffc700', '#f1416c', '#50cd89']
-        for i in range(4):
-            Designation.objects.create(
-                title=titles[i],
-                company=companies_list[i],
-                date=fake.date_between(start_date='-30d', end_date='today'),
-                color=colors[i]
-            )
-        self.stdout.write('✅ Designations')
-
-        self.stdout.write(self.style.SUCCESS('🎉 All data seeded!'))
+        self.stdout.write(self.style.SUCCESS('🎉 Data seeding completed!'))
