@@ -46,34 +46,36 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
+        print("\n🔵 [CREATE] validated_data:", validated_data)
         # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
                 profile_data[field] = validated_data.pop(field)
         role = validated_data.pop('role', None)
+        print("🔵 [CREATE] profile_data:", profile_data)
+        print("🔵 [CREATE] role:", role)
 
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
         Profile.objects.create(user=user, role=role, **profile_data)
+        print("🔵 [CREATE] user created, profile created")
         return user
 
     def update(self, instance, validated_data):
-        print("\n🔵 [UserSerializer.update] START")
-        print("🔵   instance ID:", instance.id)
-        print("🔵   validated_data keys:", validated_data.keys())
+        print("\n🔵 [UPDATE] instance ID:", instance.id)
+        print("🔵 [UPDATE] validated_data:", validated_data)
 
         # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
                 profile_data[field] = validated_data.pop(field)
-                print(f"🔵   profile_data[{field}] =", profile_data[field])
-
         role = validated_data.pop('role', None)
-        print("🔵   role extracted:", role)
+        print("🔵 [UPDATE] profile_data:", profile_data)
+        print("🔵 [UPDATE] role:", role)
 
         # Update user fields
         user_updated = False
@@ -85,24 +87,25 @@ class UserSerializer(serializers.ModelSerializer):
             user_updated = True
         if user_updated:
             instance.save()
-            print("🔵   user updated")
+            print("🔵 [UPDATE] user updated")
 
         # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
-        print("🔵   profile exists?", not created)
+        print("🔵 [UPDATE] profile exists?", not created)
 
         if role is not None:
             profile.role = role
-            print("🔵   role assigned to profile")
+            print("🔵 [UPDATE] role assigned")
 
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
-            print(f"🔵   set profile.{attr} =", value)
+            print(f"🔵 [UPDATE] set profile.{attr} = {value}")
 
         profile.save()
-        print("🔵   profile saved, role_id =", profile.role_id)
-        print("🔵 [UserSerializer.update] END\n")
+        print("🔵 [UPDATE] profile saved, role_id =", profile.role_id)
 
+        # Refresh instance to get updated profile fields
+        instance.refresh_from_db()
         return instance
 
 # Other serializers (unchanged, but keep them as they are)
