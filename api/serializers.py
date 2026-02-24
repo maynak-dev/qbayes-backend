@@ -1,3 +1,4 @@
+import logging
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
@@ -6,6 +7,8 @@ from .models import (
     ProjectTask, ActiveAuthor, UserActivity,
     Designation
 )
+
+logger = logging.getLogger(__name__)
 
 class RoleSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
@@ -57,25 +60,51 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        print("\n🔵 [UserSerializer.update] START")
+        print("🔵   instance ID:", instance.id)
+        print("🔵   validated_data keys:", validated_data.keys())
+
+        # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
                 profile_data[field] = validated_data.pop(field)
+                print(f"🔵   profile_data[{field}] =", profile_data[field])
 
         role = validated_data.pop('role', None)
+        print("🔵   role extracted:", role)
 
-        instance.username = validated_data.get('username', instance.username)
-        instance.email = validated_data.get('email', instance.email)
-        instance.save()
+        # Update user fields
+        user_updated = False
+        if 'username' in validated_data and validated_data['username'] != instance.username:
+            instance.username = validated_data['username']
+            user_updated = True
+        if 'email' in validated_data and validated_data['email'] != instance.email:
+            instance.email = validated_data['email']
+            user_updated = True
+        if user_updated:
+            instance.save()
+            print("🔵   user updated")
 
+        # Update or create profile
         profile, created = Profile.objects.get_or_create(user=instance)
+        print("🔵   profile exists?", not created)
+
         if role is not None:
             profile.role = role
+            print("🔵   role assigned to profile")
+
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
+            print(f"🔵   set profile.{attr} =", value)
+
         profile.save()
+        print("🔵   profile saved, role_id =", profile.role_id)
+        print("🔵 [UserSerializer.update] END\n")
 
         return instance
+
+# ... other serializers (unchanged)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

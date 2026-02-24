@@ -63,7 +63,6 @@ class Profile(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, default='Pending')
     steps = models.IntegerField(default=0)
-    # Override fields (kept for backward compatibility)
     company = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=100, blank=True)
     shop = models.CharField(max_length=100, blank=True)
