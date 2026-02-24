@@ -44,26 +44,25 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
-        # Extract profile fields (those with source='profile.xxx')
-        profile_fields = {}
+        profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
-                profile_fields[field] = validated_data.pop(field)
+                profile_data[field] = validated_data.pop(field)
         role = validated_data.pop('role', None)
 
         user = User.objects.create_user(
             username=validated_data.get('username'),
             email=validated_data.get('email', '')
         )
-        Profile.objects.create(user=user, role=role, **profile_fields)
+        Profile.objects.create(user=user, role=role, **profile_data)
         return user
 
     def update(self, instance, validated_data):
         # Extract profile fields
-        profile_fields = {}
+        profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
-                profile_fields[field] = validated_data.pop(field)
+                profile_data[field] = validated_data.pop(field)
 
         role = validated_data.pop('role', None)
 
@@ -76,7 +75,7 @@ class UserSerializer(serializers.ModelSerializer):
         profile, created = Profile.objects.get_or_create(user=instance)
         if role is not None:
             profile.role = role
-        for attr, value in profile_fields.items():
+        for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
 
