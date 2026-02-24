@@ -125,7 +125,7 @@ class DesignationSerializer(serializers.ModelSerializer):
         model = Designation
         fields = '__all__'
 
-# Dashboard serializers
+# Dashboard serializers (unchanged)
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource
