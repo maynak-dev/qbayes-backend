@@ -48,6 +48,15 @@ class Role(models.Model):
     def __str__(self):
         return self.name
 
+class Designation(models.Model):
+    title = models.CharField(max_length=100)
+    company = models.CharField(max_length=100)
+    date = models.DateField()
+    color = models.CharField(max_length=7)  # hex color
+
+    def __str__(self):
+        return self.title
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, related_name='profiles')
@@ -62,7 +71,7 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-# Dashboard models (unchanged)
+# Dashboard models
 class TrafficSource(models.Model):
     name = models.CharField(max_length=50)
     visitors = models.IntegerField()

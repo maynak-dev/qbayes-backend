@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from .models import (
     Profile, Role, Company, Location, Shop,
     TrafficSource, NewUser, SalesDistribution, Project,
-    ProjectTask, ActiveAuthor, UserActivity
+    ProjectTask, ActiveAuthor, UserActivity,
+    Designation 
 )
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -107,7 +108,13 @@ class ShopSerializer(serializers.ModelSerializer):
         model = Shop
         fields = ['id', 'name', 'location', 'location_name', 'company_name', 'created_at']
 
-# Dashboard serializers (keep existing ones)
+
+class DesignationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Designation
+        fields = '__all__'
+
+# Dashboard serializers
 class TrafficSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrafficSource
