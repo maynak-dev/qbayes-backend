@@ -46,6 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name() or obj.username
 
     def create(self, validated_data):
+        # Extract profile fields
         profile_data = {}
         for field in ['phone', 'status', 'steps', 'company', 'location', 'shop']:
             if field in validated_data:
@@ -104,8 +105,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         return instance
 
-# ... other serializers (unchanged)
-
+# Other serializers (unchanged, but keep them as they are)
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
