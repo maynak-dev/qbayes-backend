@@ -6,7 +6,7 @@ from api.models import (
     Company, Location, Shop, Role, Profile,
     TrafficSource, NewUser, SalesDistribution, Project,
     ProjectTask, ActiveAuthor, UserActivity, Designation,
-    Jewellery, RFID, RFIDJewelleryMap  # new models
+    Jewellery, RFID, RFIDJewelleryMap
 )
 
 class Command(BaseCommand):
@@ -91,13 +91,15 @@ class Command(BaseCommand):
             new_users.append(user)
         self.stdout.write(f'✅ Created {len(new_users)} new users')
 
-        # 6. Profiles for new users
+        # 6. Profiles for new users (with phone truncated to 20 chars)
         for user in new_users:
             role = random.choice(roles)
+            # Truncate phone number to fit max_length=20
+            phone = fake.phone_number()[:20]
             Profile.objects.create(
                 user=user,
                 role=role,
-                phone=fake.phone_number(),
+                phone=phone,
                 status=random.choice(['Pending', 'Approved', 'Rejected']),
                 steps=random.randint(0, 10),
                 company=role.company.name,
@@ -238,7 +240,6 @@ class Command(BaseCommand):
             if all_jewellery and all_rfid:
                 maps_created = 0
                 for _ in range(15):
-                    # attempt to create a unique pair (unique_together will prevent duplicates)
                     try:
                         RFIDJewelleryMap.objects.create(
                             jewellery=random.choice(all_jewellery),
