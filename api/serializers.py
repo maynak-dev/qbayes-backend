@@ -4,7 +4,8 @@ from drf_writable_nested import WritableNestedModelSerializer
 from .models import (
     Profile, Role, Company, Location, Shop,
     TrafficSource, NewUser, SalesDistribution, Project,
-    ProjectTask, ActiveAuthor, UserActivity, Designation
+    ProjectTask, ActiveAuthor, UserActivity, Designation,
+    Jewellery, RFID, RFIDJewelleryMap
 )
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -140,3 +141,28 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id', 'user', 'role', 'role_details', 'phone', 'status', 'steps', 'company', 'location', 'shop']
+
+# Jwellery Serializer
+
+class JewellerySerializer(serializers.ModelSerializer):
+    added_by_username = serializers.CharField(source='added_by.username', read_only=True)
+
+    class Meta:
+        model = Jewellery
+        fields = '__all__'
+
+class RFIDSerializer(serializers.ModelSerializer):
+    added_by_username = serializers.CharField(source='added_by.username', read_only=True)
+
+    class Meta:
+        model = RFID
+        fields = '__all__'
+
+class RFIDJewelleryMapSerializer(serializers.ModelSerializer):
+    jewellery_id_str = serializers.CharField(source='jewellery.jewellery_id', read_only=True)
+    rfid_tag = serializers.CharField(source='rfid.tag', read_only=True)
+    added_by_username = serializers.CharField(source='added_by.username', read_only=True)
+
+    class Meta:
+        model = RFIDJewelleryMap
+        fields = '__all__'

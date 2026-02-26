@@ -5,7 +5,8 @@ from faker import Faker
 from api.models import (
     Company, Location, Shop, Role, Profile,
     TrafficSource, NewUser, SalesDistribution, Project,
-    ProjectTask, ActiveAuthor, UserActivity, Designation
+    ProjectTask, ActiveAuthor, UserActivity, Designation,
+    Jewellery, RFID, RFIDJewelleryMap  # new models
 )
 
 class Command(BaseCommand):
@@ -196,5 +197,62 @@ class Command(BaseCommand):
             self.stdout.write('✅ Designations created')
         else:
             self.stdout.write('✅ Designations already exist')
+
+        # 8. Jewellery
+        if Jewellery.objects.count() == 0:
+            jewellery_items = []
+            for _ in range(20):
+                jew = Jewellery.objects.create(
+                    jewellery_id=f"J{random.randint(1000,9999)}",
+                    design_number=f"D{random.randint(100,999)}",
+                    collection_type=random.choice(['Gold', 'Platinum', 'Silver']),
+                    metal_type=random.choice(['Yellow Gold', 'White Gold', 'Rose Gold']),
+                    category=random.choice(['Ring', 'Necklace', 'Earring', 'Bracelet']),
+                    sub_category=random.choice(['Engagement', 'Wedding', 'Casual']),
+                    status=random.choice(['active', 'inactive']),
+                    added_by=random.choice(new_users) if new_users else None
+                )
+                jewellery_items.append(jew)
+            self.stdout.write(f'✅ Created {len(jewellery_items)} jewellery items')
+        else:
+            self.stdout.write('✅ Jewellery already exists')
+
+        # 9. RFID
+        if RFID.objects.count() == 0:
+            rfid_items = []
+            for _ in range(30):
+                rfid = RFID.objects.create(
+                    tag=f"RFID-{random.randint(10000,99999)}",
+                    status=random.choice(['active', 'inactive']),
+                    added_by=random.choice(new_users) if new_users else None
+                )
+                rfid_items.append(rfid)
+            self.stdout.write(f'✅ Created {len(rfid_items)} RFID tags')
+        else:
+            self.stdout.write('✅ RFID already exists')
+
+        # 10. RFIDJewelleryMap
+        if RFIDJewelleryMap.objects.count() == 0:
+            all_jewellery = list(Jewellery.objects.all())
+            all_rfid = list(RFID.objects.all())
+            if all_jewellery and all_rfid:
+                maps_created = 0
+                for _ in range(15):
+                    # attempt to create a unique pair (unique_together will prevent duplicates)
+                    try:
+                        RFIDJewelleryMap.objects.create(
+                            jewellery=random.choice(all_jewellery),
+                            rfid=random.choice(all_rfid),
+                            status=random.choice(['active', 'inactive']),
+                            added_by=random.choice(new_users) if new_users else None
+                        )
+                        maps_created += 1
+                    except:
+                        pass
+                self.stdout.write(f'✅ Created {maps_created} RFID‑Jewellery mappings')
+            else:
+                self.stdout.write('⚠️ Cannot create maps: jewellery or RFID missing')
+        else:
+            self.stdout.write('✅ RFID‑Jewellery mappings already exist')
 
         self.stdout.write(self.style.SUCCESS('🎉 Data seeding completed!'))

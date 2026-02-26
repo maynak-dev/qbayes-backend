@@ -107,3 +107,43 @@ class UserActivity(models.Model):
     month = models.CharField(max_length=3)
     active_users = models.IntegerField()
     new_users = models.IntegerField()
+
+# Jwellery Models
+class Jewellery(models.Model):
+    jewellery_id = models.CharField(max_length=100, unique=True)
+    design_number = models.CharField(max_length=100)
+    collection_type = models.CharField(max_length=100)
+    metal_type = models.CharField(max_length=100)
+    category = models.CharField(max_length=100)
+    sub_category = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive')], default='active')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='jewellery_added')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.jewellery_id
+
+class RFID(models.Model):
+    tag = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive')], default='active')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='rfid_added')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.tag
+
+class RFIDJewelleryMap(models.Model):
+    jewellery = models.ForeignKey(Jewellery, on_delete=models.CASCADE, related_name='rfid_maps')
+    rfid = models.ForeignKey(RFID, on_delete=models.CASCADE, related_name='jewellery_maps')
+    status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive')], default='active')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='map_added')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['jewellery', 'rfid']  # prevent duplicate mapping
+
+    def __str__(self):
+        return f"{self.jewellery.jewellery_id} - {self.rfid.tag}"

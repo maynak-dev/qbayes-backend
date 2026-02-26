@@ -37,4 +37,12 @@ urlpatterns = [
     path('shops/<int:pk>/', ShopRetrieveUpdateDestroy.as_view(), name='shop-detail'),
 
     path('profiles/<int:user_id>/', ProfileUpdateView.as_view(), name='profile-update'),
+
+    #Jwellery Path
+    path('jewellery/', JewelleryListCreateView.as_view(), name='jewellery-list'),
+    path('jewellery/<int:pk>/', JewelleryDetailView.as_view(), name='jewellery-detail'),
+    path('rfid/', RFIDListCreateView.as_view(), name='rfid-list'),
+    path('rfid/<int:pk>/', RFIDDetailView.as_view(), name='rfid-detail'),
+    path('rfid-jewellery-map/', RFIDJewelleryMapListCreateView.as_view(), name='rfid-jewellery-map-list'),
+    path('rfid-jewellery-map/<int:pk>/', RFIDJewelleryMapDetailView.as_view(), name='rfid-jewellery-map-detail'),
 ]

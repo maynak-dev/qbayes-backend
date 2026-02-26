@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (
     TrafficSource, NewUser, SalesDistribution, Project,
     ActiveAuthor, UserActivity, Location, Company, Shop, Role,
-    Designation, Profile
+    Designation, Profile, Jewellery, RFID, RFIDJewelleryMap
 )
 from .serializers import (
     UserSerializer, RegisterSerializer,
@@ -16,7 +16,8 @@ from .serializers import (
     SalesDistributionSerializer, ProjectSerializer,
     ActiveAuthorSerializer, UserActivitySerializer,
     LocationSerializer, CompanySerializer, ShopSerializer,
-    RoleSerializer, DesignationSerializer, ProfileSerializer
+    RoleSerializer, DesignationSerializer, ProfileSerializer, 
+    JewellerySerializer, RFIDSerializer, RFIDJewelleryMapSerializer
 )
 
 # Authentication
@@ -197,3 +198,46 @@ class ProfileUpdateView(generics.UpdateAPIView):
         # Return the profile for the user specified in the URL
         user_id = self.kwargs['user_id']
         return Profile.objects.get(user_id=user_id)
+    
+
+# Jewellery views
+class JewelleryListCreateView(generics.ListCreateAPIView):
+    queryset = Jewellery.objects.all()
+    serializer_class = JewellerySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(added_by=self.request.user)
+
+class JewelleryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Jewellery.objects.all()
+    serializer_class = JewellerySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# RFID views
+class RFIDListCreateView(generics.ListCreateAPIView):
+    queryset = RFID.objects.all()
+    serializer_class = RFIDSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(added_by=self.request.user)
+
+class RFIDDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = RFID.objects.all()
+    serializer_class = RFIDSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+# RFID-Jewellery Map views
+class RFIDJewelleryMapListCreateView(generics.ListCreateAPIView):
+    queryset = RFIDJewelleryMap.objects.all()
+    serializer_class = RFIDJewelleryMapSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(added_by=self.request.user)
+
+class RFIDJewelleryMapDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = RFIDJewelleryMap.objects.all()
+    serializer_class = RFIDJewelleryMapSerializer
+    permission_classes = [permissions.IsAuthenticated]
