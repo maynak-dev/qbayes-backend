@@ -158,5 +158,5 @@ CORS_ALLOWED_ORIGINS = [
 MQTT_BROKER = "u81317a2.ala.eu-central-1.emqxsl.com"
 MQTT_PORT = 8883
 MQTT_USERNAME = "django_subscriber"   # The user you created in EMQX
-MQTT_PASSWORD = "your-password-here"  
+MQTT_PASSWORD = "djangosubscriber"  
 MQTT_TOPIC = "/transaction"
