@@ -17,6 +17,7 @@ gunicorn==21.2.0
 h11==0.16.0
 inflection==0.5.1
 packaging==26.0
+paho-mqtt==2.1.0
 platformdirs==4.7.0
 psycopg2-binary==2.9.11
 PyJWT==2.11.0
