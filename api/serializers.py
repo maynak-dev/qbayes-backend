@@ -5,7 +5,7 @@ from .models import (
     Profile, Role, Company, Location, Shop,
     TrafficSource, NewUser, SalesDistribution, Project,
     ProjectTask, ActiveAuthor, UserActivity, Designation,
-    Jewellery, RFID, RFIDJewelleryMap
+    Jewellery, RFID, RFIDJewelleryMap, RFIDScan
 )
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -165,4 +165,10 @@ class RFIDJewelleryMapSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RFIDJewelleryMap
+        fields = '__all__'
+
+
+class RFIDScanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RFIDScan
         fields = '__all__'

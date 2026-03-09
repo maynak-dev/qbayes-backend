@@ -45,4 +45,10 @@ urlpatterns = [
     path('rfid/<int:pk>/', RFIDDetailView.as_view(), name='rfid-detail'),
     path('rfid-jewellery-map/', RFIDJewelleryMapListCreateView.as_view(), name='rfid-jewellery-map-list'),
     path('rfid-jewellery-map/<int:pk>/', RFIDJewelleryMapDetailView.as_view(), name='rfid-jewellery-map-detail'),
+
+        # MQTT webhook (public, no authentication)
+    path('mqtt-webhook/', mqtt_webhook, name='mqtt-webhook'),
+
+    # list scans (authenticated)
+    path('rfid-scans/', RFIDScanListView.as_view(), name='rfid-scan-list'),
 ]

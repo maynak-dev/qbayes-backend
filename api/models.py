@@ -147,3 +147,24 @@ class RFIDJewelleryMap(models.Model):
 
     def __str__(self):
         return f"{self.jewellery.jewellery_id} - {self.rfid.tag}"
+
+
+#MQTT
+class RFIDScan(models.Model):
+    """
+    Records every RFID scan event received via MQTT.
+    """
+    rfid_tag = models.CharField(max_length=100, db_index=True)
+    # Optional link to RFID model if the tag is known
+    rfid = models.ForeignKey(
+        'RFID',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='scans'
+    )
+    payload = models.JSONField()  # stores the full webhook payload for debugging
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.rfid_tag} at {self.created_at}"

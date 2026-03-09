@@ -17,8 +17,17 @@ from .serializers import (
     ActiveAuthorSerializer, UserActivitySerializer,
     LocationSerializer, CompanySerializer, ShopSerializer,
     RoleSerializer, DesignationSerializer, ProfileSerializer, 
-    JewellerySerializer, RFIDSerializer, RFIDJewelleryMapSerializer
+    JewellerySerializer, RFIDSerializer, RFIDJewelleryMapSerializer, RFIDScanSerializer
 )
+
+import json
+import hmac
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from .models import RFID, RFIDScan
+
 
 # Authentication
 class RegisterView(generics.CreateAPIView):
@@ -240,4 +249,66 @@ class RFIDJewelleryMapListCreateView(generics.ListCreateAPIView):
 class RFIDJewelleryMapDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = RFIDJewelleryMap.objects.all()
     serializer_class = RFIDJewelleryMapSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+
+#MQTT
+
+@csrf_exempt
+@require_POST
+def mqtt_webhook(request):
+    """
+    Endpoint called by EMQX when a message arrives on /transaction topic.
+    Expects a secret token in the X-Webhook-Token header.
+    """
+    # 1. Verify the secret token
+    token = request.headers.get('X-Webhook-Token', '')
+    expected_token = getattr(settings, 'MQTT_WEBHOOK_SECRET', None)
+    if not expected_token:
+        return JsonResponse({'error': 'Webhook secret not configured'}, status=500)
+
+    if not hmac.compare_digest(token, expected_token):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    # 2. Parse JSON body
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    # 3. Extract the RFID tag from the payload
+    # EMQX sends: {"topic": "/transaction", "payload": "TAG-12345", "qos": 1, ...}
+    # The actual message from your publisher is in data.get('payload').
+    payload = data.get('payload')
+    if not payload:
+        return JsonResponse({'error': 'No payload'}, status=400)
+
+    rfid_tag = str(payload)  # assume payload is the tag string
+
+    # 4. Try to find the RFID object (optional)
+    rfid_obj = None
+    try:
+        rfid_obj = RFID.objects.get(tag=rfid_tag)
+    except RFID.DoesNotExist:
+        # Tag not in our database – still record the scan with just the tag string
+        pass
+
+    # 5. Save the scan
+    RFIDScan.objects.create(
+        rfid_tag=rfid_tag,
+        rfid=rfid_obj,
+        payload=data
+    )
+
+    # 6. Trigger any business logic here
+
+    return JsonResponse({'status': 'ok'})
+
+
+#For React Part
+
+class RFIDScanListView(generics.ListAPIView):
+    queryset = RFIDScan.objects.all().order_by('-created_at')
+    serializer_class = RFIDScanSerializer
     permission_classes = [permissions.IsAuthenticated]
